@@ -17,8 +17,7 @@ type (
 	Config struct {
 		ControllerAddress string
 		AdvertiseAddress  string
-		HTTPPort          int
-		GRPCPort          int
+		Port              int
 		Workflows         []workflow.Workflow
 		Tasks             []task.Task
 	}
