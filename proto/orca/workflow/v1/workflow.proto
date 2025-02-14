@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package orca.workflow.v1;
+
+option go_package = "github.com/davidsbond/orca/internal/proto/orca/workflow/v1;workflowv1";
+
+// The Workflow type represents the current state of a single workflow run
+message Workflow {
+  string run_id = 1;
+
+  Status status = 2;
+
+  bytes input = 3;
+
+  bytes output = 4;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_PENDING = 1;
+  STATUS_SCHEDULED = 2;
+  STATUS_RUNNING = 3;
+  STATUS_COMPLETE = 4;
+  STATUS_FAILED = 5;
+}

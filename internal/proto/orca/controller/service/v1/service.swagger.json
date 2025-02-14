@@ -1,0 +1,152 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "orca/controller/service/v1/service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "ControllerService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {},
+  "definitions": {
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "orcataskv1Status": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "default": 0
+    },
+    "orcaworkflowv1Status": {
+      "type": "integer",
+      "format": "int32",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "default": 0
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "v1DeregisterWorkerResponse": {
+      "type": "object"
+    },
+    "v1GetTaskStatusResponse": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "$ref": "#/definitions/v1Task"
+        }
+      }
+    },
+    "v1RegisterWorkerResponse": {
+      "type": "object"
+    },
+    "v1ScheduleTaskResponse": {
+      "type": "object",
+      "properties": {
+        "taskRunId": {
+          "type": "string",
+          "description": "The unique identifier of the task run."
+        }
+      }
+    },
+    "v1SetTaskStatusResponse": {
+      "type": "object"
+    },
+    "v1SetWorkflowStatusResponse": {
+      "type": "object"
+    },
+    "v1Task": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/orcataskv1Status"
+        },
+        "input": {
+          "type": "string",
+          "format": "byte"
+        },
+        "output": {
+          "type": "string",
+          "format": "byte"
+        }
+      },
+      "title": "The Task type represents the current state of a single task run"
+    },
+    "v1Worker": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The worker's unique identifier."
+        },
+        "advertiseAddress": {
+          "type": "string",
+          "description": "The advertised address of the worker, through which its workflows and tasks can be\nscheduled via gRPC calls."
+        },
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The workflows this worker supports."
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The tasks this worker supports."
+        }
+      },
+      "description": "The Worker type represents a single worker that can be used to schedule workflows and\ntasks."
+    }
+  }
+}

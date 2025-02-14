@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package orca.controller.service.v1;
+
+import "orca/task/v1/task.proto";
+import "orca/worker/v1/worker.proto";
+import "orca/workflow/v1/workflow.proto";
+
+option go_package = "github.com/davidsbond/orca/internal/proto/orca/controller/service/v1;controllersvcv1";
+
+// The ControllerService contains endpoints that are exposed on orca controller instances and relate specifically
+// to controller operations.
+service ControllerService {
+  // Register a Worker
+  rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse);
+
+  // Deregister a Worker
+  rpc DeregisterWorker(DeregisterWorkerRequest) returns (DeregisterWorkerResponse);
+
+  // Schedule a Task
+  rpc ScheduleTask(ScheduleTaskRequest) returns (ScheduleTaskResponse);
+
+  // Set the status of a Task.
+  rpc SetTaskStatus(SetTaskStatusRequest) returns (SetTaskStatusResponse);
+
+  // Get the status of a Task.
+  rpc GetTaskStatus(GetTaskStatusRequest) returns (GetTaskStatusResponse);
+
+  // Set the status of a Workflow.
+  rpc SetWorkflowStatus(SetWorkflowStatusRequest) returns (SetWorkflowStatusResponse);
+}
+
+message RegisterWorkerRequest {
+  orca.worker.v1.Worker worker = 1;
+}
+
+message RegisterWorkerResponse {}
+
+message DeregisterWorkerRequest {
+  // The unique identifier of the worker to deregister.
+  string worker_id = 1;
+}
+
+message DeregisterWorkerResponse {}
+
+message ScheduleTaskRequest {
+  // The workflow run the task is scheduled for.
+  string workflow_run_id = 1;
+  // The name of the task to run.
+  string task_name = 2;
+  // Encoded input to pass to the task.
+  bytes input = 3;
+}
+
+message ScheduleTaskResponse {
+  // The unique identifier of the task run.
+  string task_run_id = 1;
+}
+
+message SetTaskStatusRequest {
+  string task_run_id = 1;
+  orca.task.v1.Status status = 2;
+  bytes output = 3;
+}
+
+message SetTaskStatusResponse {}
+
+message GetTaskStatusRequest {
+  string task_run_id = 1;
+}
+
+message GetTaskStatusResponse {
+  orca.task.v1.Task task = 1;
+}
+
+message SetWorkflowStatusRequest {
+  string workflow_run_id = 1;
+  orca.workflow.v1.Status status = 2;
+  bytes output = 3;
+}
+
+message SetWorkflowStatusResponse {}
