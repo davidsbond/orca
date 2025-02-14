@@ -57,11 +57,15 @@ func (s *Scheduler) Run(ctx context.Context) error {
 	return group.Wait()
 }
 
-func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, workflow workflow.Workflow, input []byte) error {
+func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow.Workflow, input []byte) error {
 	sw := &scheduledWorkflow{
 		runID:    id,
-		workflow: workflow,
+		workflow: wf,
 		input:    input,
+	}
+
+	if err := s.controller.SetWorkflowStatus(ctx, sw.runID, workflow.StatusScheduled, nil); err != nil {
+		return err
 	}
 
 	select {
@@ -72,11 +76,15 @@ func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, workflow wo
 	}
 }
 
-func (s *Scheduler) ScheduleTask(ctx context.Context, id string, task task.Task, input []byte) error {
+func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, input []byte) error {
 	st := &scheduledTask{
 		runID: id,
-		task:  task,
+		task:  t,
 		input: input,
+	}
+
+	if err := s.controller.SetTaskStatus(ctx, st.runID, task.StatusScheduled, nil); err != nil {
+		return err
 	}
 
 	select {
