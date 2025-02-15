@@ -2,24 +2,46 @@ syntax = "proto3";
 
 package orca.task.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/davidsbond/orca/internal/proto/orca/task/v1;taskv1";
 
-// The Task type represents the current state of a single task run
-message Task {
+// The Run type represents the current state of a single task run
+message Run {
+  // The unique identifier of the task run.
   string run_id = 1;
-
-  Status status = 2;
-
-  bytes input = 3;
-
-  bytes output = 4;
+  // The unique identifier of the workflow run this task was run within.
+  string workflow_run_id = 2;
+  // The name of the task being ran.
+  string task_name = 3;
+  // When the task run was created.
+  google.protobuf.Timestamp created_at = 4;
+  // When the task run was scheduled.
+  google.protobuf.Timestamp scheduled_at = 5;
+  // When the task run was started.
+  google.protobuf.Timestamp started_at = 6;
+  // When the task run was completed.
+  google.protobuf.Timestamp completed_at = 7;
+  // The status of the task run.
+  Status status = 8;
+  // The encoded input provided to the task run.
+  bytes input = 9;
+  // The encoding output of the task run.
+  bytes output = 10;
 }
 
+// The Status enumeration represents the status of a task run.
 enum Status {
+  // The task run has an unknown status.
   STATUS_UNSPECIFIED = 0;
+  // The task run has been created and is awaiting scheduling.
   STATUS_PENDING = 1;
+  // The task run has been scheduled and is awaiting execution.
   STATUS_SCHEDULED = 2;
+  // The task run is running.
   STATUS_RUNNING = 3;
+  // The task run completed successfully.
   STATUS_COMPLETE = 4;
+  // The task run failed.
   STATUS_FAILED = 5;
 }

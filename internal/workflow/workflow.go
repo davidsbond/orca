@@ -1,6 +1,10 @@
 package workflow
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"time"
+)
 
 type (
 	Workflow interface {
@@ -11,7 +15,16 @@ type (
 	Status int
 
 	Run struct {
-		ID string
+		ID           string
+		ParentID     string
+		WorkflowName string
+		CreatedAt    time.Time
+		ScheduledAt  time.Time
+		StartedAt    time.Time
+		CompletedAt  time.Time
+		Status       Status
+		Input        json.RawMessage
+		Output       json.RawMessage
 	}
 
 	ctxKey struct{}

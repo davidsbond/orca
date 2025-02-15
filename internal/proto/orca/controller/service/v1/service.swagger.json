@@ -36,6 +36,58 @@
         }
       }
     },
+    "orcataskv1Run": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "description": "The unique identifier of the task run."
+        },
+        "workflowRunId": {
+          "type": "string",
+          "description": "The unique identifier of the workflow run this task was run within."
+        },
+        "taskName": {
+          "type": "string",
+          "description": "The name of the task being ran."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was created."
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was scheduled."
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was started."
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was completed."
+        },
+        "status": {
+          "$ref": "#/definitions/orcataskv1Status",
+          "description": "The status of the task run."
+        },
+        "input": {
+          "type": "string",
+          "format": "byte",
+          "description": "The encoded input provided to the task run."
+        },
+        "output": {
+          "type": "string",
+          "format": "byte",
+          "description": "The encoding output of the task run."
+        }
+      },
+      "title": "The Run type represents the current state of a single task run"
+    },
     "orcataskv1Status": {
       "type": "integer",
       "format": "int32",
@@ -47,7 +99,60 @@
         4,
         5
       ],
-      "default": 0
+      "default": 0,
+      "description": "The Status enumeration represents the status of a task run.\n\n - 0: The task run has an unknown status.\n - 1: The task run has been created and is awaiting scheduling.\n - 2: The task run has been scheduled and is awaiting execution.\n - 3: The task run is running.\n - 4: The task run completed successfully.\n - 5: The task run failed."
+    },
+    "orcaworkflowv1Run": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "description": "The unique identifier of the workflow run."
+        },
+        "parentWorkflowRunId": {
+          "type": "string",
+          "description": "The unique identifier of the parent workflow run this workflow was run within. Assumed to be the root if this\nis not provided."
+        },
+        "workflowName": {
+          "type": "string",
+          "description": "The name of the workflow being ran."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was created."
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was scheduled."
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was started."
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was completed."
+        },
+        "status": {
+          "$ref": "#/definitions/orcaworkflowv1Status",
+          "description": "The status of the workflow run."
+        },
+        "input": {
+          "type": "string",
+          "format": "byte",
+          "description": "The encoded input provided to the workflow run."
+        },
+        "output": {
+          "type": "string",
+          "format": "byte",
+          "description": "The encoding output of the workflow run."
+        }
+      },
+      "title": "The Run type represents the current state of a single workflow run"
     },
     "orcaworkflowv1Status": {
       "type": "integer",
@@ -60,7 +165,8 @@
         4,
         5
       ],
-      "default": 0
+      "default": 0,
+      "description": "The Status enumeration represents the status of a workflow run.\n\n - 0: The workflow run has an unknown status.\n - 1: The workflow run has been created and is awaiting scheduling.\n - 2: The workflow run has been scheduled and is awaiting execution.\n - 3: The workflow run is running.\n - 4: The workflow run completed successfully.\n - 5: The workflow run failed."
     },
     "protobufAny": {
       "type": "object",
@@ -74,11 +180,21 @@
     "v1DeregisterWorkerResponse": {
       "type": "object"
     },
-    "v1GetTaskStatusResponse": {
+    "v1GetTaskRunResponse": {
       "type": "object",
       "properties": {
-        "task": {
-          "$ref": "#/definitions/v1Task"
+        "taskRun": {
+          "$ref": "#/definitions/orcataskv1Run",
+          "description": "The task run state."
+        }
+      }
+    },
+    "v1GetWorkflowRunResponse": {
+      "type": "object",
+      "properties": {
+        "workflowRun": {
+          "$ref": "#/definitions/orcaworkflowv1Run",
+          "description": "The workflow run state."
         }
       }
     },
@@ -94,31 +210,20 @@
         }
       }
     },
-    "v1SetTaskStatusResponse": {
-      "type": "object"
-    },
-    "v1SetWorkflowStatusResponse": {
-      "type": "object"
-    },
-    "v1Task": {
+    "v1ScheduleWorkflowResponse": {
       "type": "object",
       "properties": {
-        "runId": {
-          "type": "string"
-        },
-        "status": {
-          "$ref": "#/definitions/orcataskv1Status"
-        },
-        "input": {
+        "workflowRunId": {
           "type": "string",
-          "format": "byte"
-        },
-        "output": {
-          "type": "string",
-          "format": "byte"
+          "description": "The unique identifier of the workflow run."
         }
-      },
-      "title": "The Task type represents the current state of a single task run"
+      }
+    },
+    "v1SetTaskRunStatusResponse": {
+      "type": "object"
+    },
+    "v1SetWorkflowRunStatusResponse": {
+      "type": "object"
     },
     "v1Worker": {
       "type": "object",

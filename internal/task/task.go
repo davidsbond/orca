@@ -1,6 +1,10 @@
 package task
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"time"
+)
 
 type (
 	Task interface {
@@ -12,7 +16,20 @@ type (
 
 	Client interface {
 		ScheduleTask(ctx context.Context, runID string, name string, params []byte) (string, error)
-		GetTaskStatus(ctx context.Context, runID string) (Status, []byte, error)
+		GetTaskRun(ctx context.Context, runID string) (Run, error)
+	}
+
+	Run struct {
+		ID            string
+		WorkflowRunID string
+		TaskName      string
+		CreatedAt     time.Time
+		ScheduledAt   time.Time
+		StartedAt     time.Time
+		CompletedAt   time.Time
+		Status        Status
+		Input         json.RawMessage
+		Output        json.RawMessage
 	}
 
 	ctxKey struct{}

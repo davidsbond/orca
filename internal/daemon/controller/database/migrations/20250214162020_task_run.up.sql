@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS task_run
     started_at      TIMESTAMP,
     completed_at    TIMESTAMP,
     status          NUMERIC   NOT NULL DEFAULT 0,
-    input           JSONB     NOT NULL DEFAULT '{}',
-    output          JSONB     NOT NULL DEFAULT '{}'
+    input           JSONB     NOT NULL DEFAULT 'null',
+    output          JSONB     NOT NULL DEFAULT 'null'
 );
 
 COMMIT;

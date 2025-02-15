@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/davidsbond/orca/internal/daemon/controller/client"
 	"github.com/davidsbond/orca/internal/daemon/worker/registry"
 	"github.com/davidsbond/orca/internal/daemon/worker/scheduler"
-	"github.com/davidsbond/orca/internal/daemon/worker/task"
-	"github.com/davidsbond/orca/internal/daemon/worker/workflow"
-
-	"golang.org/x/sync/errgroup"
+	"github.com/davidsbond/orca/pkg/task"
+	"github.com/davidsbond/orca/pkg/workflow"
 )
 
 type (

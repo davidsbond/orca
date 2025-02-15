@@ -20,17 +20,24 @@ service ControllerService {
   // Schedule a Task
   rpc ScheduleTask(ScheduleTaskRequest) returns (ScheduleTaskResponse);
 
-  // Set the status of a Task.
-  rpc SetTaskStatus(SetTaskStatusRequest) returns (SetTaskStatusResponse);
+  // Set the status of a Task run.
+  rpc SetTaskRunStatus(SetTaskRunStatusRequest) returns (SetTaskRunStatusResponse);
 
-  // Get the status of a Task.
-  rpc GetTaskStatus(GetTaskStatusRequest) returns (GetTaskStatusResponse);
+  // Get information on a task run.
+  rpc GetTaskRun(GetTaskRunRequest) returns (GetTaskRunResponse);
 
-  // Set the status of a Workflow.
-  rpc SetWorkflowStatus(SetWorkflowStatusRequest) returns (SetWorkflowStatusResponse);
+  // Schedule a Workflow.
+  rpc ScheduleWorkflow(ScheduleWorkflowRequest) returns (ScheduleWorkflowResponse);
+
+  // Set the status of a Workflow run.
+  rpc SetWorkflowRunStatus(SetWorkflowRunStatusRequest) returns (SetWorkflowRunStatusResponse);
+
+  // Get information on a workflow run.
+  rpc GetWorkflowRun(GetWorkflowRunRequest) returns (GetWorkflowRunResponse);
 }
 
 message RegisterWorkerRequest {
+  // The worker details.
   orca.worker.v1.Worker worker = 1;
 }
 
@@ -57,26 +64,60 @@ message ScheduleTaskResponse {
   string task_run_id = 1;
 }
 
-message SetTaskStatusRequest {
+message SetTaskRunStatusRequest {
+  // The unique identifier of the task run.
   string task_run_id = 1;
+  // The status of the task run.
   orca.task.v1.Status status = 2;
+  // The output of the task run. This is optional and should only be provided when the task is in a completed
+  // or failed state.
   bytes output = 3;
 }
 
-message SetTaskStatusResponse {}
+message SetTaskRunStatusResponse {}
 
-message GetTaskStatusRequest {
+message GetTaskRunRequest {
+  // The unique identifier of the task run.
   string task_run_id = 1;
 }
 
-message GetTaskStatusResponse {
-  orca.task.v1.Task task = 1;
+message GetTaskRunResponse {
+  // The task run state.
+  orca.task.v1.Run task_run = 1;
 }
 
-message SetWorkflowStatusRequest {
+message SetWorkflowRunStatusRequest {
+  // The unique identifier of the workflow run.
   string workflow_run_id = 1;
+  // The status of the workflow run.
   orca.workflow.v1.Status status = 2;
+  // The output of the workflow run. This is optional and should only be provided when the workflow is in a completed
+  // or failed state.
   bytes output = 3;
 }
 
-message SetWorkflowStatusResponse {}
+message SetWorkflowRunStatusResponse {}
+
+message ScheduleWorkflowRequest {
+  // The parent workflow triggering this one. Assumed to be the root if an ID is not provided.
+  string parent_workflow_run_id = 1;
+  // The name of the workflow to run.
+  string workflow_name = 2;
+  // Encoded input to pass to the task.
+  bytes input = 3;
+}
+
+message ScheduleWorkflowResponse {
+  // The unique identifier of the workflow run.
+  string workflow_run_id = 1;
+}
+
+message GetWorkflowRunRequest {
+  // The unique identifier of the workflow run.
+  string workflow_run_id = 1;
+}
+
+message GetWorkflowRunResponse {
+  // The workflow run state.
+  orca.workflow.v1.Run workflow_run = 1;
+}

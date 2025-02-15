@@ -19,12 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ControllerService_RegisterWorker_FullMethodName    = "/orca.controller.service.v1.ControllerService/RegisterWorker"
-	ControllerService_DeregisterWorker_FullMethodName  = "/orca.controller.service.v1.ControllerService/DeregisterWorker"
-	ControllerService_ScheduleTask_FullMethodName      = "/orca.controller.service.v1.ControllerService/ScheduleTask"
-	ControllerService_SetTaskStatus_FullMethodName     = "/orca.controller.service.v1.ControllerService/SetTaskStatus"
-	ControllerService_GetTaskStatus_FullMethodName     = "/orca.controller.service.v1.ControllerService/GetTaskStatus"
-	ControllerService_SetWorkflowStatus_FullMethodName = "/orca.controller.service.v1.ControllerService/SetWorkflowStatus"
+	ControllerService_RegisterWorker_FullMethodName       = "/orca.controller.service.v1.ControllerService/RegisterWorker"
+	ControllerService_DeregisterWorker_FullMethodName     = "/orca.controller.service.v1.ControllerService/DeregisterWorker"
+	ControllerService_ScheduleTask_FullMethodName         = "/orca.controller.service.v1.ControllerService/ScheduleTask"
+	ControllerService_SetTaskRunStatus_FullMethodName     = "/orca.controller.service.v1.ControllerService/SetTaskRunStatus"
+	ControllerService_GetTaskRun_FullMethodName           = "/orca.controller.service.v1.ControllerService/GetTaskRun"
+	ControllerService_ScheduleWorkflow_FullMethodName     = "/orca.controller.service.v1.ControllerService/ScheduleWorkflow"
+	ControllerService_SetWorkflowRunStatus_FullMethodName = "/orca.controller.service.v1.ControllerService/SetWorkflowRunStatus"
+	ControllerService_GetWorkflowRun_FullMethodName       = "/orca.controller.service.v1.ControllerService/GetWorkflowRun"
 )
 
 // ControllerServiceClient is the client API for ControllerService service.
@@ -40,12 +42,16 @@ type ControllerServiceClient interface {
 	DeregisterWorker(ctx context.Context, in *DeregisterWorkerRequest, opts ...grpc.CallOption) (*DeregisterWorkerResponse, error)
 	// Schedule a Task
 	ScheduleTask(ctx context.Context, in *ScheduleTaskRequest, opts ...grpc.CallOption) (*ScheduleTaskResponse, error)
-	// Set the status of a Task.
-	SetTaskStatus(ctx context.Context, in *SetTaskStatusRequest, opts ...grpc.CallOption) (*SetTaskStatusResponse, error)
-	// Get the status of a Task.
-	GetTaskStatus(ctx context.Context, in *GetTaskStatusRequest, opts ...grpc.CallOption) (*GetTaskStatusResponse, error)
-	// Set the status of a Workflow.
-	SetWorkflowStatus(ctx context.Context, in *SetWorkflowStatusRequest, opts ...grpc.CallOption) (*SetWorkflowStatusResponse, error)
+	// Set the status of a Task run.
+	SetTaskRunStatus(ctx context.Context, in *SetTaskRunStatusRequest, opts ...grpc.CallOption) (*SetTaskRunStatusResponse, error)
+	// Get information on a task run.
+	GetTaskRun(ctx context.Context, in *GetTaskRunRequest, opts ...grpc.CallOption) (*GetTaskRunResponse, error)
+	// Schedule a Workflow.
+	ScheduleWorkflow(ctx context.Context, in *ScheduleWorkflowRequest, opts ...grpc.CallOption) (*ScheduleWorkflowResponse, error)
+	// Set the status of a Workflow run.
+	SetWorkflowRunStatus(ctx context.Context, in *SetWorkflowRunStatusRequest, opts ...grpc.CallOption) (*SetWorkflowRunStatusResponse, error)
+	// Get information on a workflow run.
+	GetWorkflowRun(ctx context.Context, in *GetWorkflowRunRequest, opts ...grpc.CallOption) (*GetWorkflowRunResponse, error)
 }
 
 type controllerServiceClient struct {
@@ -86,30 +92,50 @@ func (c *controllerServiceClient) ScheduleTask(ctx context.Context, in *Schedule
 	return out, nil
 }
 
-func (c *controllerServiceClient) SetTaskStatus(ctx context.Context, in *SetTaskStatusRequest, opts ...grpc.CallOption) (*SetTaskStatusResponse, error) {
+func (c *controllerServiceClient) SetTaskRunStatus(ctx context.Context, in *SetTaskRunStatusRequest, opts ...grpc.CallOption) (*SetTaskRunStatusResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetTaskStatusResponse)
-	err := c.cc.Invoke(ctx, ControllerService_SetTaskStatus_FullMethodName, in, out, cOpts...)
+	out := new(SetTaskRunStatusResponse)
+	err := c.cc.Invoke(ctx, ControllerService_SetTaskRunStatus_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *controllerServiceClient) GetTaskStatus(ctx context.Context, in *GetTaskStatusRequest, opts ...grpc.CallOption) (*GetTaskStatusResponse, error) {
+func (c *controllerServiceClient) GetTaskRun(ctx context.Context, in *GetTaskRunRequest, opts ...grpc.CallOption) (*GetTaskRunResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTaskStatusResponse)
-	err := c.cc.Invoke(ctx, ControllerService_GetTaskStatus_FullMethodName, in, out, cOpts...)
+	out := new(GetTaskRunResponse)
+	err := c.cc.Invoke(ctx, ControllerService_GetTaskRun_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *controllerServiceClient) SetWorkflowStatus(ctx context.Context, in *SetWorkflowStatusRequest, opts ...grpc.CallOption) (*SetWorkflowStatusResponse, error) {
+func (c *controllerServiceClient) ScheduleWorkflow(ctx context.Context, in *ScheduleWorkflowRequest, opts ...grpc.CallOption) (*ScheduleWorkflowResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetWorkflowStatusResponse)
-	err := c.cc.Invoke(ctx, ControllerService_SetWorkflowStatus_FullMethodName, in, out, cOpts...)
+	out := new(ScheduleWorkflowResponse)
+	err := c.cc.Invoke(ctx, ControllerService_ScheduleWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *controllerServiceClient) SetWorkflowRunStatus(ctx context.Context, in *SetWorkflowRunStatusRequest, opts ...grpc.CallOption) (*SetWorkflowRunStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetWorkflowRunStatusResponse)
+	err := c.cc.Invoke(ctx, ControllerService_SetWorkflowRunStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *controllerServiceClient) GetWorkflowRun(ctx context.Context, in *GetWorkflowRunRequest, opts ...grpc.CallOption) (*GetWorkflowRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetWorkflowRunResponse)
+	err := c.cc.Invoke(ctx, ControllerService_GetWorkflowRun_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -129,12 +155,16 @@ type ControllerServiceServer interface {
 	DeregisterWorker(context.Context, *DeregisterWorkerRequest) (*DeregisterWorkerResponse, error)
 	// Schedule a Task
 	ScheduleTask(context.Context, *ScheduleTaskRequest) (*ScheduleTaskResponse, error)
-	// Set the status of a Task.
-	SetTaskStatus(context.Context, *SetTaskStatusRequest) (*SetTaskStatusResponse, error)
-	// Get the status of a Task.
-	GetTaskStatus(context.Context, *GetTaskStatusRequest) (*GetTaskStatusResponse, error)
-	// Set the status of a Workflow.
-	SetWorkflowStatus(context.Context, *SetWorkflowStatusRequest) (*SetWorkflowStatusResponse, error)
+	// Set the status of a Task run.
+	SetTaskRunStatus(context.Context, *SetTaskRunStatusRequest) (*SetTaskRunStatusResponse, error)
+	// Get information on a task run.
+	GetTaskRun(context.Context, *GetTaskRunRequest) (*GetTaskRunResponse, error)
+	// Schedule a Workflow.
+	ScheduleWorkflow(context.Context, *ScheduleWorkflowRequest) (*ScheduleWorkflowResponse, error)
+	// Set the status of a Workflow run.
+	SetWorkflowRunStatus(context.Context, *SetWorkflowRunStatusRequest) (*SetWorkflowRunStatusResponse, error)
+	// Get information on a workflow run.
+	GetWorkflowRun(context.Context, *GetWorkflowRunRequest) (*GetWorkflowRunResponse, error)
 	mustEmbedUnimplementedControllerServiceServer()
 }
 
@@ -154,14 +184,20 @@ func (UnimplementedControllerServiceServer) DeregisterWorker(context.Context, *D
 func (UnimplementedControllerServiceServer) ScheduleTask(context.Context, *ScheduleTaskRequest) (*ScheduleTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ScheduleTask not implemented")
 }
-func (UnimplementedControllerServiceServer) SetTaskStatus(context.Context, *SetTaskStatusRequest) (*SetTaskStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetTaskStatus not implemented")
+func (UnimplementedControllerServiceServer) SetTaskRunStatus(context.Context, *SetTaskRunStatusRequest) (*SetTaskRunStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetTaskRunStatus not implemented")
 }
-func (UnimplementedControllerServiceServer) GetTaskStatus(context.Context, *GetTaskStatusRequest) (*GetTaskStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTaskStatus not implemented")
+func (UnimplementedControllerServiceServer) GetTaskRun(context.Context, *GetTaskRunRequest) (*GetTaskRunResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTaskRun not implemented")
 }
-func (UnimplementedControllerServiceServer) SetWorkflowStatus(context.Context, *SetWorkflowStatusRequest) (*SetWorkflowStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetWorkflowStatus not implemented")
+func (UnimplementedControllerServiceServer) ScheduleWorkflow(context.Context, *ScheduleWorkflowRequest) (*ScheduleWorkflowResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ScheduleWorkflow not implemented")
+}
+func (UnimplementedControllerServiceServer) SetWorkflowRunStatus(context.Context, *SetWorkflowRunStatusRequest) (*SetWorkflowRunStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetWorkflowRunStatus not implemented")
+}
+func (UnimplementedControllerServiceServer) GetWorkflowRun(context.Context, *GetWorkflowRunRequest) (*GetWorkflowRunResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetWorkflowRun not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 func (UnimplementedControllerServiceServer) testEmbeddedByValue()                           {}
@@ -238,56 +274,92 @@ func _ControllerService_ScheduleTask_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ControllerService_SetTaskStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetTaskStatusRequest)
+func _ControllerService_SetTaskRunStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetTaskRunStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ControllerServiceServer).SetTaskStatus(ctx, in)
+		return srv.(ControllerServiceServer).SetTaskRunStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ControllerService_SetTaskStatus_FullMethodName,
+		FullMethod: ControllerService_SetTaskRunStatus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControllerServiceServer).SetTaskStatus(ctx, req.(*SetTaskStatusRequest))
+		return srv.(ControllerServiceServer).SetTaskRunStatus(ctx, req.(*SetTaskRunStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ControllerService_GetTaskStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTaskStatusRequest)
+func _ControllerService_GetTaskRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskRunRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ControllerServiceServer).GetTaskStatus(ctx, in)
+		return srv.(ControllerServiceServer).GetTaskRun(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ControllerService_GetTaskStatus_FullMethodName,
+		FullMethod: ControllerService_GetTaskRun_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControllerServiceServer).GetTaskStatus(ctx, req.(*GetTaskStatusRequest))
+		return srv.(ControllerServiceServer).GetTaskRun(ctx, req.(*GetTaskRunRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ControllerService_SetWorkflowStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetWorkflowStatusRequest)
+func _ControllerService_ScheduleWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ScheduleWorkflowRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ControllerServiceServer).SetWorkflowStatus(ctx, in)
+		return srv.(ControllerServiceServer).ScheduleWorkflow(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ControllerService_SetWorkflowStatus_FullMethodName,
+		FullMethod: ControllerService_ScheduleWorkflow_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControllerServiceServer).SetWorkflowStatus(ctx, req.(*SetWorkflowStatusRequest))
+		return srv.(ControllerServiceServer).ScheduleWorkflow(ctx, req.(*ScheduleWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ControllerService_SetWorkflowRunStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetWorkflowRunStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServiceServer).SetWorkflowRunStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ControllerService_SetWorkflowRunStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServiceServer).SetWorkflowRunStatus(ctx, req.(*SetWorkflowRunStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ControllerService_GetWorkflowRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetWorkflowRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServiceServer).GetWorkflowRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ControllerService_GetWorkflowRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServiceServer).GetWorkflowRun(ctx, req.(*GetWorkflowRunRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -312,16 +384,24 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ControllerService_ScheduleTask_Handler,
 		},
 		{
-			MethodName: "SetTaskStatus",
-			Handler:    _ControllerService_SetTaskStatus_Handler,
+			MethodName: "SetTaskRunStatus",
+			Handler:    _ControllerService_SetTaskRunStatus_Handler,
 		},
 		{
-			MethodName: "GetTaskStatus",
-			Handler:    _ControllerService_GetTaskStatus_Handler,
+			MethodName: "GetTaskRun",
+			Handler:    _ControllerService_GetTaskRun_Handler,
 		},
 		{
-			MethodName: "SetWorkflowStatus",
-			Handler:    _ControllerService_SetWorkflowStatus_Handler,
+			MethodName: "ScheduleWorkflow",
+			Handler:    _ControllerService_ScheduleWorkflow_Handler,
+		},
+		{
+			MethodName: "SetWorkflowRunStatus",
+			Handler:    _ControllerService_SetWorkflowRunStatus_Handler,
+		},
+		{
+			MethodName: "GetWorkflowRun",
+			Handler:    _ControllerService_GetWorkflowRun_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

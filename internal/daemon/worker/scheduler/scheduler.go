@@ -3,10 +3,10 @@ package scheduler
 import (
 	"context"
 
-	"github.com/davidsbond/orca/internal/daemon/worker/task"
-	"github.com/davidsbond/orca/internal/daemon/worker/workflow"
-
 	"golang.org/x/sync/errgroup"
+
+	"github.com/davidsbond/orca/internal/task"
+	"github.com/davidsbond/orca/internal/workflow"
 )
 
 type (
@@ -29,10 +29,11 @@ type (
 	}
 
 	ControllerClient interface {
-		SetWorkflowStatus(ctx context.Context, runID string, status workflow.Status, output []byte) error
-		SetTaskStatus(ctx context.Context, runID string, status task.Status, output []byte) error
+		SetWorkflowRunStatus(ctx context.Context, runID string, status workflow.Status, output []byte) error
+		SetTaskRunStatus(ctx context.Context, runID string, status task.Status, output []byte) error
 		ScheduleTask(ctx context.Context, runID string, name string, params []byte) (string, error)
-		GetTaskStatus(ctx context.Context, runID string) (task.Status, []byte, error)
+		GetTaskRun(ctx context.Context, runID string) (task.Run, error)
+		GetWorkflowRun(ctx context.Context, runID string) (workflow.Run, error)
 	}
 )
 
@@ -64,14 +65,14 @@ func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow
 		input:    input,
 	}
 
-	if err := s.controller.SetWorkflowStatus(ctx, sw.runID, workflow.StatusScheduled, nil); err != nil {
-		return err
-	}
-
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case s.workflows <- sw:
+		if err := s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusScheduled, nil); err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
@@ -83,14 +84,14 @@ func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, in
 		input: input,
 	}
 
-	if err := s.controller.SetTaskStatus(ctx, st.runID, task.StatusScheduled, nil); err != nil {
-		return err
-	}
-
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
 	case s.tasks <- st:
+		if err := s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusScheduled, nil); err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
@@ -122,22 +123,26 @@ func (s *Scheduler) runTasks(ctx context.Context) error {
 }
 
 func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) error {
-	if err := s.controller.SetWorkflowStatus(ctx, sw.runID, workflow.StatusRunning, nil); err != nil {
+	run, err := s.controller.GetWorkflowRun(ctx, sw.runID)
+	if err != nil {
 		return err
 	}
 
-	ctx = workflow.RunToContext(ctx, workflow.Run{ID: sw.runID})
+	if err = s.controller.SetWorkflowRunStatus(ctx, run.ID, workflow.StatusRunning, nil); err != nil {
+		return err
+	}
 
+	ctx = workflow.RunToContext(ctx, run)
 	output, err := sw.workflow.Run(ctx, sw.input)
 	if err != nil {
-		if err = s.controller.SetWorkflowStatus(ctx, sw.runID, workflow.StatusFailed, []byte(err.Error())); err != nil {
+		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusFailed, []byte(err.Error())); err != nil {
 			return err
 		}
 
 		return nil
 	}
 
-	if err = s.controller.SetWorkflowStatus(ctx, sw.runID, workflow.StatusComplete, output); err != nil {
+	if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusComplete, output); err != nil {
 		return err
 	}
 
@@ -145,7 +150,7 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 }
 
 func (s *Scheduler) runTask(ctx context.Context, st *scheduledTask) error {
-	if err := s.controller.SetTaskStatus(ctx, st.runID, task.StatusRunning, nil); err != nil {
+	if err := s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusRunning, nil); err != nil {
 		return err
 	}
 
@@ -153,14 +158,14 @@ func (s *Scheduler) runTask(ctx context.Context, st *scheduledTask) error {
 
 	output, err := st.task.Run(ctx, st.input)
 	if err != nil {
-		if err = s.controller.SetTaskStatus(ctx, st.runID, task.StatusFailed, []byte(err.Error())); err != nil {
+		if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusFailed, []byte(err.Error())); err != nil {
 			return err
 		}
 
 		return nil
 	}
 
-	if err = s.controller.SetTaskStatus(ctx, st.runID, task.StatusComplete, output); err != nil {
+	if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusComplete, output); err != nil {
 		return err
 	}
 
