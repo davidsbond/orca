@@ -20,7 +20,7 @@ func run() *cobra.Command {
 	}
 
 	flags := cmd.PersistentFlags()
-	flags.StringVar(&config.DatabaseURL, "database-url", "postgres://postgres:postges@localhost:5432/postgres?sslmode=disable", "URL for connecting to the database")
+	flags.StringVar(&config.DatabaseURL, "database-url", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable", "URL for connecting to the database")
 	flags.IntVar(&config.HTTPPort, "http-port", 8080, "Port to use for HTTP traffic")
 	flags.IntVar(&config.GRPCPort, "grpc-port", 8081, "Port to use for gRPC traffic")
 

@@ -9,7 +9,7 @@ import "orca/workflow/v1/workflow.proto";
 option go_package = "github.com/davidsbond/orca/internal/proto/orca/controller/service/v1;controllersvcv1";
 
 // The ControllerService contains endpoints that are exposed on orca controller instances and relate specifically
-// to controller operations.
+// to controller operations. This service should only be used by workers.
 service ControllerService {
   // Register a Worker
   rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse);

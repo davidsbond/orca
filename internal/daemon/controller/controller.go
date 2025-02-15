@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/davidsbond/orca/internal/daemon"
 	"github.com/davidsbond/orca/internal/daemon/controller/api"
 	"github.com/davidsbond/orca/internal/daemon/controller/database"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/task"
@@ -35,6 +36,15 @@ func Run(ctx context.Context, config Config) error {
 	controllerAPI := api.New(controllerSvc)
 
 	group, ctx := errgroup.WithContext(ctx)
+
+	group.Go(func() error {
+		return daemon.Run(ctx, daemon.Config{
+			GRPCPort: config.GRPCPort,
+			GRPCControllers: []daemon.GRPCController{
+				controllerAPI,
+			},
+		})
+	})
 
 	group.Go(func() error {
 		<-ctx.Done()

@@ -9,6 +9,7 @@ import (
 
 	controllersvcv1 "github.com/davidsbond/orca/internal/proto/orca/controller/service/v1"
 	taskv1 "github.com/davidsbond/orca/internal/proto/orca/task/v1"
+	workerv1 "github.com/davidsbond/orca/internal/proto/orca/worker/v1"
 	workflowv1 "github.com/davidsbond/orca/internal/proto/orca/workflow/v1"
 	"github.com/davidsbond/orca/internal/task"
 	"github.com/davidsbond/orca/internal/workflow"
@@ -18,6 +19,13 @@ type (
 	Client struct {
 		conn       *grpc.ClientConn
 		controller controllersvcv1.ControllerServiceClient
+	}
+
+	WorkerInfo struct {
+		ID               string
+		AdvertiseAddress string
+		Workflows        []string
+		Tasks            []string
 	}
 )
 
@@ -128,4 +136,33 @@ func (c *Client) GetWorkflowRun(ctx context.Context, runID string) (workflow.Run
 		Input:        t.GetInput(),
 		Output:       t.GetOutput(),
 	}, nil
+}
+
+func (c *Client) RegisterWorker(ctx context.Context, info WorkerInfo) error {
+	request := &controllersvcv1.RegisterWorkerRequest{
+		Worker: &workerv1.Worker{
+			Id:               info.ID,
+			AdvertiseAddress: info.AdvertiseAddress,
+			Workflows:        info.Workflows,
+			Tasks:            info.Tasks,
+		},
+	}
+
+	if _, err := c.controller.RegisterWorker(ctx, request); err != nil {
+		return fmt.Errorf("failed to register worker: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Client) DeregisterWorker(ctx context.Context, id string) error {
+	request := &controllersvcv1.DeregisterWorkerRequest{
+		WorkerId: id,
+	}
+
+	if _, err := c.controller.DeregisterWorker(ctx, request); err != nil {
+		return fmt.Errorf("failed to deregister worker: %w", err)
+	}
+
+	return nil
 }

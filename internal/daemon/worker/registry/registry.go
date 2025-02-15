@@ -3,8 +3,8 @@ package registry
 import (
 	"sync"
 
-	"github.com/davidsbond/orca/pkg/task"
-	"github.com/davidsbond/orca/pkg/workflow"
+	"github.com/davidsbond/orca/internal/task"
+	"github.com/davidsbond/orca/internal/workflow"
 )
 
 type (
@@ -54,4 +54,28 @@ func (r *Registry) GetTask(name string) (task.Task, bool) {
 
 	w, ok := r.tasks[name]
 	return w, ok
+}
+
+func (r *Registry) Workflows() []string {
+	r.mux.RLock()
+	defer r.mux.RUnlock()
+
+	names := make([]string, 0, len(r.workflows))
+	for name := range r.workflows {
+		names = append(names, name)
+	}
+
+	return names
+}
+
+func (r *Registry) Tasks() []string {
+	r.mux.RLock()
+	defer r.mux.RUnlock()
+
+	names := make([]string, 0, len(r.tasks))
+	for name := range r.tasks {
+		names = append(names, name)
+	}
+
+	return names
 }
