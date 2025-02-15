@@ -34,7 +34,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // The ControllerService contains endpoints that are exposed on orca controller instances and relate specifically
-// to controller operations.
+// to controller operations. This service should only be used by workers.
 type ControllerServiceClient interface {
 	// Register a Worker
 	RegisterWorker(ctx context.Context, in *RegisterWorkerRequest, opts ...grpc.CallOption) (*RegisterWorkerResponse, error)
@@ -147,7 +147,7 @@ func (c *controllerServiceClient) GetWorkflowRun(ctx context.Context, in *GetWor
 // for forward compatibility.
 //
 // The ControllerService contains endpoints that are exposed on orca controller instances and relate specifically
-// to controller operations.
+// to controller operations. This service should only be used by workers.
 type ControllerServiceServer interface {
 	// Register a Worker
 	RegisterWorker(context.Context, *RegisterWorkerRequest) (*RegisterWorkerResponse, error)

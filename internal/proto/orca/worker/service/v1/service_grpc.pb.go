@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // The WorkerService contains endpoints that are exposed on orca worker instances and relate specifically
-// to worker operations.
+// to worker operations. This service should only be used by controllers.
 type WorkerServiceClient interface {
 	// Run a Workflow.
 	RunWorkflow(ctx context.Context, in *RunWorkflowRequest, opts ...grpc.CallOption) (*RunWorkflowResponse, error)
@@ -69,7 +69,7 @@ func (c *workerServiceClient) RunTask(ctx context.Context, in *RunTaskRequest, o
 // for forward compatibility.
 //
 // The WorkerService contains endpoints that are exposed on orca worker instances and relate specifically
-// to worker operations.
+// to worker operations. This service should only be used by controllers.
 type WorkerServiceServer interface {
 	// Run a Workflow.
 	RunWorkflow(context.Context, *RunWorkflowRequest) (*RunWorkflowResponse, error)

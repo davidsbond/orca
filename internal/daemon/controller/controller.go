@@ -12,6 +12,7 @@ import (
 	"github.com/davidsbond/orca/internal/daemon/controller/database/task"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/worker"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/workflow"
+	"github.com/davidsbond/orca/internal/daemon/controller/runner"
 )
 
 type (
@@ -32,6 +33,8 @@ func Run(ctx context.Context, config Config) error {
 	tasks := task.NewPostgresRepository(db)
 	workflows := workflow.NewPostgresRepository(db)
 
+	run := runner.New(workers, workflows, tasks)
+
 	controllerSvc := api.NewControllerService(workers, tasks, workflows)
 	controllerAPI := api.New(controllerSvc)
 
@@ -44,6 +47,10 @@ func Run(ctx context.Context, config Config) error {
 				controllerAPI,
 			},
 		})
+	})
+
+	group.Go(func() error {
+		return run.Run(ctx)
 	})
 
 	group.Go(func() error {

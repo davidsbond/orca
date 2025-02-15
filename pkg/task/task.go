@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"github.com/davidsbond/orca/internal/workflow"
+	"time"
 
 	"github.com/davidsbond/orca/internal/task"
+	"github.com/davidsbond/orca/internal/workflow"
 )
 
 type (
@@ -40,11 +40,14 @@ func Execute[Output any](ctx context.Context, t Task, input any) (Output, error)
 		return output, fmt.Errorf("could not schedule task: %w", err)
 	}
 
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return output, ctx.Err()
-		default:
+		case <-ticker.C:
 			taskRun, err := client.GetTaskRun(ctx, runID)
 			if err != nil {
 				return output, err
