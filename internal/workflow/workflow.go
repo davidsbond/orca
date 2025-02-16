@@ -41,6 +41,7 @@ type (
 		RunID        string `json:"runId"`
 		TaskRunID    string `json:"taskRunId,omitempty"`
 		TaskName     string `json:"taskName,omitempty"`
+		Panic        bool   `json:"panic,omitempty"`
 	}
 )
 

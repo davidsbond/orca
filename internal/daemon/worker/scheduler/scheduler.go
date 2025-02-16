@@ -150,9 +150,9 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 		var e workflow.Error
 		if !errors.As(err, &e) {
 			e = workflow.Error{
-				Message:  err.Error(),
-				TaskName: sw.workflow.Name(),
-				RunID:    sw.runID,
+				Message:      err.Error(),
+				WorkflowName: sw.workflow.Name(),
+				RunID:        sw.runID,
 			}
 		}
 

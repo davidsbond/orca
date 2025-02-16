@@ -38,6 +38,7 @@ type (
 		Message  string `json:"message"`
 		TaskName string `json:"taskName"`
 		RunID    string `json:"runId"`
+		Panic    bool   `json:"panic,omitempty"`
 	}
 )
 

@@ -89,6 +89,8 @@ func testChildWorkflow() *workflow.Implementation[TestChildWorkflowInput, TestCh
 				builder.WriteRune(rune(taskOutput.Greeting[i]))
 			}
 
+			panic("bingus bongus")
+
 			return TestChildWorkflowOutput{
 				Extra: builder.String(),
 			}, nil
