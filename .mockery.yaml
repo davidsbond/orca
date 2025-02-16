@@ -1,0 +1,19 @@
+with-expecter: true
+log-level: error
+packages:
+  github.com/davidsbond/orca/internal/daemon/controller/api/controller:
+    config:
+      outpkg: mocks
+      resolve-type-alias: false
+      issue-845-fix: true
+      mockname: "{{.InterfaceName}}"
+      dir: "{{.InterfaceDir}}/mocks"
+    interfaces:
+      Service:
+        config: {}
+      WorkerRepository:
+        config: {}
+      WorkflowRepository:
+        config: {}
+      TaskRepository:
+        config: {}

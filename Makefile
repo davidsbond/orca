@@ -6,3 +6,6 @@ generate:
 
 migrate:
 	go tool migrate create -dir internal/daemon/controller/database/migrations -ext sql $(NAME)
+
+test:
+	go test -race -short ./...

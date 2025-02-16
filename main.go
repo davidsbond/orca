@@ -1,4 +1,5 @@
 //go:generate go tool buf generate
+//go:generate go tool mockery
 package main
 
 import (
