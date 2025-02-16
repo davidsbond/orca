@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,8 +18,13 @@ type (
 	}
 
 	Repository interface {
+		Get(ctx context.Context, id string) (workflow.Run, error)
 		Save(ctx context.Context, run workflow.Run) error
 	}
+)
+
+var (
+	ErrNotFound = errors.New("not found")
 )
 
 func NewHandler(workflows Repository) *Handler {
@@ -48,4 +54,16 @@ func (h *Handler) ScheduleWorkflow(ctx context.Context, name string, input json.
 	}
 
 	return run.ID, nil
+}
+
+func (h *Handler) GetRun(ctx context.Context, runID string) (workflow.Run, error) {
+	run, err := h.workflows.Get(ctx, runID)
+	switch {
+	case errors.Is(err, workflow.ErrNotFound):
+		return workflow.Run{}, ErrNotFound
+	case err != nil:
+		return workflow.Run{}, err
+	default:
+		return run, nil
+	}
 }

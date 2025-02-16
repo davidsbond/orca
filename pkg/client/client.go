@@ -1,8 +1,6 @@
 package client
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 
 	"google.golang.org/grpc"
@@ -19,6 +17,10 @@ type (
 	}
 )
 
+var (
+	ErrNotFound = errors.New("not found")
+)
+
 func Dial(addr string) (*Client, error) {
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -33,20 +35,6 @@ func Dial(addr string) (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.conn.Close()
-}
-
-func (c *Client) ScheduleWorkflow(ctx context.Context, name string, input json.RawMessage) (string, error) {
-	request := &workflowsvcv1.ScheduleRequest{
-		WorkflowName: name,
-		Input:        input,
-	}
-
-	response, err := c.workflows.Schedule(ctx, request)
-	if err != nil {
-		return "", formatError(err)
-	}
-
-	return response.GetWorkflowRunId(), nil
 }
 
 func formatError(err error) error {
