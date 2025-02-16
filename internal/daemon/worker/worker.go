@@ -29,7 +29,7 @@ type (
 )
 
 func Run(ctx context.Context, cfg Config) error {
-	client, err := controller.Dial(cfg.ControllerAddress)
+	client, err := controller.Dial(ctx, cfg.ControllerAddress)
 	if err != nil {
 		return fmt.Errorf("failed to dial controller: %w", err)
 	}

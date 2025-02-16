@@ -3,6 +3,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -11,6 +12,7 @@ import (
 	"github.com/davidsbond/orca/internal/daemon/controller/database/worker"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/workflow"
 	worker_api "github.com/davidsbond/orca/internal/daemon/worker/api/worker"
+	"github.com/davidsbond/orca/internal/log"
 )
 
 type (
@@ -103,6 +105,12 @@ func (s *Runner) runTasks(ctx context.Context) error {
 }
 
 func (s *Runner) runTask(ctx context.Context, run task.Run) error {
+	logger := log.FromContext(ctx).With(
+		slog.String("workflow_run_id", run.WorkflowRunID),
+		slog.String("task_run_id", run.ID),
+		slog.String("task_name", run.TaskName),
+	)
+
 	w, err := s.workers.GetWorkerForTask(ctx, run.TaskName)
 	switch {
 	case errors.Is(err, worker.ErrNotFound):
@@ -111,7 +119,7 @@ func (s *Runner) runTask(ctx context.Context, run task.Run) error {
 		return err
 	}
 
-	wrk, err := worker_api.Dial(w.AdvertiseAddress)
+	wrk, err := worker_api.Dial(ctx, w.AdvertiseAddress)
 	if err != nil {
 		return err
 	}
@@ -121,6 +129,8 @@ func (s *Runner) runTask(ctx context.Context, run task.Run) error {
 	run.Status = task.StatusScheduled
 	run.ScheduledAt.Valid = true
 	run.ScheduledAt.V = time.Now()
+
+	logger.With(slog.String("worker_id", w.ID)).InfoContext(ctx, "assigned task to worker")
 
 	if err = s.tasks.Save(ctx, run); err != nil {
 		return err
@@ -134,6 +144,12 @@ func (s *Runner) runTask(ctx context.Context, run task.Run) error {
 }
 
 func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
+	logger := log.FromContext(ctx).With(
+		slog.String("workflow_run_id", run.ID),
+		slog.String("parent_workflow_run_id", run.ParentWorkflowRunID.V),
+		slog.String("workflow_name", run.WorkflowName),
+	)
+
 	w, err := s.workers.GetWorkerForWorkflow(ctx, run.WorkflowName)
 	switch {
 	case errors.Is(err, worker.ErrNotFound):
@@ -142,7 +158,7 @@ func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
 		return err
 	}
 
-	wrk, err := worker_api.Dial(w.AdvertiseAddress)
+	wrk, err := worker_api.Dial(ctx, w.AdvertiseAddress)
 	if err != nil {
 		return err
 	}
@@ -152,6 +168,8 @@ func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
 	run.Status = workflow.StatusScheduled
 	run.ScheduledAt.Valid = true
 	run.ScheduledAt.V = time.Now()
+
+	logger.With(slog.String("worker_id", w.ID)).DebugContext(ctx, "assigned workflow to worker")
 
 	if err = s.workflows.Save(ctx, run); err != nil {
 		return err

@@ -3,6 +3,8 @@ package task
 import (
 	"context"
 	"encoding/json"
+
+	"github.com/davidsbond/orca/internal/task"
 )
 
 type (
@@ -14,7 +16,7 @@ type (
 	Action[Input any, Output any] func(ctx context.Context, input Input) (Output, error)
 )
 
-func (t *Implementation[Input, Output]) Run(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
+func (t *Implementation[Input, Output]) Run(ctx context.Context, runID string, input json.RawMessage) (json.RawMessage, error) {
 	var inp Input
 	if len(input) > 0 {
 		if err := json.Unmarshal(input, &inp); err != nil {
@@ -24,7 +26,11 @@ func (t *Implementation[Input, Output]) Run(ctx context.Context, input json.RawM
 
 	output, err := t.Action(ctx, inp)
 	if err != nil {
-		return nil, err
+		return nil, task.Error{
+			Message:  err.Error(),
+			TaskName: t.TaskName,
+			RunID:    runID,
+		}
 	}
 
 	return json.Marshal(output)

@@ -3,6 +3,10 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
+
+	"github.com/davidsbond/orca/internal/task"
+	"github.com/davidsbond/orca/internal/workflow"
 )
 
 type (
@@ -14,7 +18,7 @@ type (
 	Action[Input any, Output any] func(ctx context.Context, input Input) (Output, error)
 )
 
-func (w *Implementation[Input, Output]) Run(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
+func (w *Implementation[Input, Output]) Run(ctx context.Context, runID string, input json.RawMessage) (json.RawMessage, error) {
 	var inp Input
 
 	if len(input) > 0 {
@@ -25,7 +29,20 @@ func (w *Implementation[Input, Output]) Run(ctx context.Context, input json.RawM
 
 	output, err := w.Action(ctx, inp)
 	if err != nil {
-		return nil, err
+		we := workflow.Error{
+			Message:      err.Error(),
+			WorkflowName: w.WorkflowName,
+			RunID:        runID,
+		}
+
+		var e task.Error
+		if errors.As(err, &e) {
+			we.Message = e.Message
+			we.TaskRunID = e.RunID
+			we.TaskName = e.TaskName
+		}
+
+		return nil, we
 	}
 
 	return json.Marshal(output)

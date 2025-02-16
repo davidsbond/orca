@@ -63,7 +63,12 @@ func Execute[Output any](ctx context.Context, t Task, input any) (Output, error)
 
 				return output, nil
 			case task.StatusFailed:
-				return output, errors.New(string(taskRun.Output))
+				var e task.Error
+				if err = json.Unmarshal(taskRun.Output, &e); err != nil {
+					return output, fmt.Errorf("failed to unmarshal output: %w", err)
+				}
+
+				return output, e
 			default:
 				continue
 			}

@@ -2,8 +2,13 @@ package main_test
 
 import (
 	"context"
+	"errors"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
+
+	"github.com/davidsbond/orca/internal/log"
 
 	"github.com/davidsbond/orca/internal/daemon/worker"
 	task2 "github.com/davidsbond/orca/internal/task"
@@ -48,9 +53,7 @@ func testTask() *task.Implementation[TestTaskInput, TestTaskOutput] {
 	return &task.Implementation[TestTaskInput, TestTaskOutput]{
 		TaskName: "TestTask",
 		Action: func(ctx context.Context, input TestTaskInput) (TestTaskOutput, error) {
-			return TestTaskOutput{
-				Greeting: "Hello " + input.Name,
-			}, nil
+			return TestTaskOutput{}, errors.New("test error")
 		},
 	}
 }
@@ -58,6 +61,8 @@ func testTask() *task.Implementation[TestTaskInput, TestTaskOutput] {
 func TestWorker(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), time.Hour)
 	defer cancel()
+
+	ctx = log.ToContext(ctx, slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
 
 	err := worker.Run(ctx, worker.Config{
 		ID:                "65e1dee9-d017-46c3-84c0-e39edd548075",

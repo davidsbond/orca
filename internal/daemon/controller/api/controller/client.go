@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/davidsbond/orca/internal/daemon"
+
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	controllersvcv1 "github.com/davidsbond/orca/internal/proto/orca/private/controller/service/v1"
 	workerv1 "github.com/davidsbond/orca/internal/proto/orca/private/worker/v1"
@@ -30,8 +31,8 @@ type (
 	}
 )
 
-func Dial(addr string) (*Client, error) {
-	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func Dial(ctx context.Context, addr string) (*Client, error) {
+	conn, err := daemon.Dial(ctx, addr)
 	if err != nil {
 		return nil, err
 	}

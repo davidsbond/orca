@@ -3,9 +3,12 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"log/slog"
 
 	"golang.org/x/sync/errgroup"
 
+	"github.com/davidsbond/orca/internal/log"
 	"github.com/davidsbond/orca/internal/task"
 	"github.com/davidsbond/orca/internal/workflow"
 )
@@ -128,15 +131,37 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 	ctx = workflow.RunToContext(ctx, run)
 	ctx = task.ClientToContext(ctx, s.controller)
 
-	output, err := sw.workflow.Run(ctx, sw.input)
+	logger := log.FromContext(ctx).With(
+		slog.String("workflow_run_id", sw.runID),
+		slog.String("workflow_name", sw.workflow.Name()),
+	)
+
+	logger.InfoContext(ctx, "running workflow")
+	output, err := sw.workflow.Run(ctx, sw.runID, sw.input)
 	if err != nil {
-		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusFailed, json.RawMessage(err.Error())); err != nil {
+		var e workflow.Error
+		if !errors.As(err, &e) {
+			e = workflow.Error{
+				Message:  err.Error(),
+				TaskName: sw.workflow.Name(),
+				RunID:    sw.runID,
+			}
+		}
+
+		output, err = json.Marshal(e)
+		if err != nil {
+			return err
+		}
+
+		logger.With(slog.String("error", e.Message)).ErrorContext(ctx, "workflow run failed")
+		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusFailed, output); err != nil {
 			return err
 		}
 
 		return nil
 	}
 
+	logger.InfoContext(ctx, "workflow run complete")
 	if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusComplete, output); err != nil {
 		return err
 	}
@@ -149,15 +174,37 @@ func (s *Scheduler) runTask(ctx context.Context, st *scheduledTask) error {
 		return err
 	}
 
-	output, err := st.task.Run(ctx, st.input)
+	logger := log.FromContext(ctx).With(
+		slog.String("task_run_id", st.runID),
+		slog.String("task_name", st.task.Name()),
+	)
+
+	logger.InfoContext(ctx, "running task")
+	output, err := st.task.Run(ctx, st.runID, st.input)
 	if err != nil {
-		if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusFailed, json.RawMessage(err.Error())); err != nil {
+		var e task.Error
+		if !errors.As(err, &e) {
+			e = task.Error{
+				Message:  err.Error(),
+				TaskName: st.task.Name(),
+				RunID:    st.runID,
+			}
+		}
+
+		output, err = json.Marshal(e)
+		if err != nil {
+			return err
+		}
+
+		logger.With(slog.String("error", e.Message)).ErrorContext(ctx, "task run failed")
+		if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusFailed, output); err != nil {
 			return err
 		}
 
 		return nil
 	}
 
+	logger.InfoContext(ctx, "task run complete")
 	if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusComplete, output); err != nil {
 		return err
 	}

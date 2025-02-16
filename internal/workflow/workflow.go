@@ -8,7 +8,7 @@ import (
 
 type (
 	Workflow interface {
-		Run(ctx context.Context, input json.RawMessage) (json.RawMessage, error)
+		Run(ctx context.Context, runID string, input json.RawMessage) (json.RawMessage, error)
 		Name() string
 	}
 
@@ -28,7 +28,19 @@ type (
 	}
 
 	ctxKey struct{}
+
+	Error struct {
+		Message      string `json:"message"`
+		WorkflowName string `json:"workflowName"`
+		RunID        string `json:"runId"`
+		TaskRunID    string `json:"taskRunId,omitempty"`
+		TaskName     string `json:"taskName,omitempty"`
+	}
 )
+
+func (e Error) Error() string {
+	return e.Message
+}
 
 const (
 	StatusUnspecified Status = iota
