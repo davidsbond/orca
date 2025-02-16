@@ -8,14 +8,14 @@ import (
 
 type (
 	Task interface {
-		Run(ctx context.Context, input []byte) ([]byte, error)
+		Run(ctx context.Context, input json.RawMessage) (json.RawMessage, error)
 		Name() string
 	}
 
 	Status int
 
 	Client interface {
-		ScheduleTask(ctx context.Context, runID string, name string, params []byte) (string, error)
+		ScheduleTask(ctx context.Context, runID string, name string, params json.RawMessage) (string, error)
 		GetTaskRun(ctx context.Context, runID string) (Run, error)
 	}
 

@@ -14,10 +14,13 @@ type (
 	Action[Input any, Output any] func(ctx context.Context, input Input) (Output, error)
 )
 
-func (w *Implementation[Input, Output]) Run(ctx context.Context, input []byte) ([]byte, error) {
+func (w *Implementation[Input, Output]) Run(ctx context.Context, input json.RawMessage) (json.RawMessage, error) {
 	var inp Input
-	if err := json.Unmarshal(input, &inp); err != nil {
-		return nil, err
+
+	if len(input) > 0 {
+		if err := json.Unmarshal(input, &inp); err != nil {
+			return nil, err
+		}
 	}
 
 	output, err := w.Action(ctx, inp)

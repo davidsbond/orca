@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 
 	"golang.org/x/sync/errgroup"
 
@@ -19,19 +20,19 @@ type (
 	scheduledWorkflow struct {
 		runID    string
 		workflow workflow.Workflow
-		input    []byte
+		input    json.RawMessage
 	}
 
 	scheduledTask struct {
 		runID string
 		task  task.Task
-		input []byte
+		input json.RawMessage
 	}
 
 	ControllerClient interface {
-		SetWorkflowRunStatus(ctx context.Context, runID string, status workflow.Status, output []byte) error
-		SetTaskRunStatus(ctx context.Context, runID string, status task.Status, output []byte) error
-		ScheduleTask(ctx context.Context, runID string, name string, params []byte) (string, error)
+		SetWorkflowRunStatus(ctx context.Context, runID string, status workflow.Status, output json.RawMessage) error
+		SetTaskRunStatus(ctx context.Context, runID string, status task.Status, output json.RawMessage) error
+		ScheduleTask(ctx context.Context, runID string, name string, params json.RawMessage) (string, error)
 		GetTaskRun(ctx context.Context, runID string) (task.Run, error)
 		GetWorkflowRun(ctx context.Context, runID string) (workflow.Run, error)
 	}
@@ -58,7 +59,7 @@ func (s *Scheduler) Run(ctx context.Context) error {
 	return group.Wait()
 }
 
-func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow.Workflow, input []byte) error {
+func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow.Workflow, input json.RawMessage) error {
 	sw := &scheduledWorkflow{
 		runID:    id,
 		workflow: wf,
@@ -73,7 +74,7 @@ func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow
 	}
 }
 
-func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, input []byte) error {
+func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, input json.RawMessage) error {
 	st := &scheduledTask{
 		runID: id,
 		task:  t,
@@ -125,9 +126,11 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 	}
 
 	ctx = workflow.RunToContext(ctx, run)
+	ctx = task.ClientToContext(ctx, s.controller)
+
 	output, err := sw.workflow.Run(ctx, sw.input)
 	if err != nil {
-		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusFailed, []byte(err.Error())); err != nil {
+		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusFailed, json.RawMessage(err.Error())); err != nil {
 			return err
 		}
 
@@ -146,11 +149,9 @@ func (s *Scheduler) runTask(ctx context.Context, st *scheduledTask) error {
 		return err
 	}
 
-	ctx = task.ClientToContext(ctx, s.controller)
-
 	output, err := st.task.Run(ctx, st.input)
 	if err != nil {
-		if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusFailed, []byte(err.Error())); err != nil {
+		if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusFailed, json.RawMessage(err.Error())); err != nil {
 			return err
 		}
 

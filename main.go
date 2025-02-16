@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -11,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/davidsbond/orca/cmd/controller"
+	"github.com/davidsbond/orca/cmd/workflow"
 )
 
 func main() {
@@ -30,13 +32,18 @@ func main() {
 		CompletionOptions: cobra.CompletionOptions{
 			DisableDefaultCmd: true,
 		},
+		TraverseChildren: true,
+		SilenceErrors:    true,
+		SilenceUsage:     true,
 	}
 
 	cmd.AddCommand(
 		controller.Command(),
+		workflow.Command(),
 	)
 
 	if err := cmd.ExecuteContext(ctx); err != nil {
+		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 }

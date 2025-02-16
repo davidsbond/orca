@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package orca.private.worker.v1;
+
+option go_package = "github.com/davidsbond/orca/internal/proto/orca/private/worker/v1;workerv1";
+
+// The Worker type represents a single worker that can be used to schedule workflows and
+// tasks.
+message Worker {
+  // The worker's unique identifier.
+  string id = 1;
+
+  // The advertised address of the worker, through which its workflows and tasks can be
+  // scheduled via gRPC calls.
+  string advertise_address = 2;
+
+  // The workflows this worker supports.
+  repeated string workflows = 3;
+
+  // The tasks this worker supports.
+  repeated string tasks = 4;
+}

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package orca.private.worker.service.v1;
+
+option go_package = "github.com/davidsbond/orca/internal/proto/orca/private/worker/service/v1;workersvcv1";
+
+// The WorkerService contains endpoints that are exposed on orca worker instances and relate specifically
+// to worker operations. This service should only be used by controllers.
+service WorkerService {
+  // Run a Workflow.
+  rpc RunWorkflow(RunWorkflowRequest) returns (RunWorkflowResponse);
+
+  // Run a Task.
+  rpc RunTask(RunTaskRequest) returns (RunTaskResponse);
+}
+
+message RunWorkflowRequest {
+  // The unique identifier of the workflow run.
+  string workflow_run_id = 1;
+  // The name of the workflow to run.
+  string workflow_name = 2;
+  // Encoded input to pass to the workflow.
+  bytes input = 3;
+}
+
+message RunWorkflowResponse {}
+
+message RunTaskRequest {
+  // The unique identifier of the task run.
+  string task_run_id = 1;
+  // The name of the task to run.
+  string task_name = 2;
+  // Encoded input to pass to the task.
+  bytes input = 3;
+}
+
+message RunTaskResponse {}

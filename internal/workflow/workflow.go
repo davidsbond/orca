@@ -8,7 +8,7 @@ import (
 
 type (
 	Workflow interface {
-		Run(ctx context.Context, input []byte) ([]byte, error)
+		Run(ctx context.Context, input json.RawMessage) (json.RawMessage, error)
 		Name() string
 	}
 

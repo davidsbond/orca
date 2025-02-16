@@ -12,8 +12,8 @@ func run() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run a controller instance",
-		Long: "Starts a controller instance that will handle worker registration and orchestration of workflows and their " +
-			"individual tasks",
+		Long: "Starts a controller instance that will handle worker registration and orchestration of workflows and their\n" +
+			"individual tasks.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return controller.Run(cmd.Context(), config)
 		},

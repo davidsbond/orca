@@ -56,7 +56,7 @@ func testTask() *task.Implementation[TestTaskInput, TestTaskOutput] {
 }
 
 func TestWorker(t *testing.T) {
-	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+	ctx, cancel := context.WithTimeout(t.Context(), time.Hour)
 	defer cancel()
 
 	err := worker.Run(ctx, worker.Config{

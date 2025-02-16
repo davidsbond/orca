@@ -9,8 +9,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/davidsbond/orca/internal/daemon"
-	"github.com/davidsbond/orca/internal/daemon/controller/client"
-	"github.com/davidsbond/orca/internal/daemon/worker/api"
+	"github.com/davidsbond/orca/internal/daemon/controller/api/controller"
+	"github.com/davidsbond/orca/internal/daemon/worker/api/worker"
 	"github.com/davidsbond/orca/internal/daemon/worker/registry"
 	"github.com/davidsbond/orca/internal/daemon/worker/scheduler"
 	"github.com/davidsbond/orca/internal/task"
@@ -29,7 +29,7 @@ type (
 )
 
 func Run(ctx context.Context, cfg Config) error {
-	controller, err := client.Dial(cfg.ControllerAddress)
+	client, err := controller.Dial(cfg.ControllerAddress)
 	if err != nil {
 		return fmt.Errorf("failed to dial controller: %w", err)
 	}
@@ -38,10 +38,10 @@ func Run(ctx context.Context, cfg Config) error {
 	reg.RegisterWorkflows(cfg.Workflows...)
 	reg.RegisterTasks(cfg.Tasks...)
 
-	sched := scheduler.New(controller)
+	sched := scheduler.New(client)
 
-	workerSvc := api.NewWorkerService(reg, sched)
-	workerAPI := api.New(workerSvc)
+	workerSvc := worker.NewHandler(reg, sched)
+	workerAPI := worker.NewAPI(workerSvc)
 
 	group, ctx := errgroup.WithContext(ctx)
 	group.Go(func() error {
@@ -58,7 +58,7 @@ func Run(ctx context.Context, cfg Config) error {
 	})
 
 	group.Go(func() error {
-		return controller.RegisterWorker(ctx, client.WorkerInfo{
+		return client.RegisterWorker(ctx, controller.WorkerInfo{
 			ID:               cfg.ID,
 			AdvertiseAddress: cfg.AdvertiseAddress,
 			Workflows:        reg.Workflows(),
@@ -73,8 +73,8 @@ func Run(ctx context.Context, cfg Config) error {
 		defer cancel()
 
 		return errors.Join(
-			controller.DeregisterWorker(ctx, cfg.ID),
-			controller.Close(),
+			client.DeregisterWorker(ctx, cfg.ID),
+			client.Close(),
 		)
 	})
 

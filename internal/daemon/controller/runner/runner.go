@@ -10,7 +10,7 @@ import (
 	"github.com/davidsbond/orca/internal/daemon/controller/database/task"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/worker"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/workflow"
-	"github.com/davidsbond/orca/internal/daemon/worker/client"
+	worker_api "github.com/davidsbond/orca/internal/daemon/worker/api/worker"
 )
 
 type (
@@ -111,7 +111,7 @@ func (s *Runner) runTask(ctx context.Context, run task.Run) error {
 		return err
 	}
 
-	wrk, err := client.Dial(w.AdvertiseAddress)
+	wrk, err := worker_api.Dial(w.AdvertiseAddress)
 	if err != nil {
 		return err
 	}
@@ -119,12 +119,14 @@ func (s *Runner) runTask(ctx context.Context, run task.Run) error {
 	run.WorkerID.Valid = true
 	run.WorkerID.V = w.ID
 	run.Status = task.StatusScheduled
+	run.ScheduledAt.Valid = true
+	run.ScheduledAt.V = time.Now()
 
 	if err = s.tasks.Save(ctx, run); err != nil {
 		return err
 	}
 
-	if err = wrk.RunTask(ctx, run.ID, run.TaskName, run.Input); err != nil {
+	if err = wrk.RunTask(ctx, run.ID, run.TaskName, run.Input.V.Bytes); err != nil {
 		return err
 	}
 
@@ -140,7 +142,7 @@ func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
 		return err
 	}
 
-	wrk, err := client.Dial(w.AdvertiseAddress)
+	wrk, err := worker_api.Dial(w.AdvertiseAddress)
 	if err != nil {
 		return err
 	}
@@ -148,12 +150,14 @@ func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
 	run.WorkerID.Valid = true
 	run.WorkerID.V = w.ID
 	run.Status = workflow.StatusScheduled
+	run.ScheduledAt.Valid = true
+	run.ScheduledAt.V = time.Now()
 
 	if err = s.workflows.Save(ctx, run); err != nil {
 		return err
 	}
 
-	if err = wrk.RunWorkflow(ctx, run.ID, run.WorkflowName, run.Input); err != nil {
+	if err = wrk.RunWorkflow(ctx, run.ID, run.WorkflowName, run.Input.V.Bytes); err != nil {
 		return err
 	}
 

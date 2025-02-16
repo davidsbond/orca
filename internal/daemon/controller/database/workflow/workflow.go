@@ -3,10 +3,10 @@ package workflow
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"time"
 
+	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -25,8 +25,8 @@ type (
 		StartedAt           sql.Null[time.Time]
 		CompletedAt         sql.Null[time.Time]
 		Status              Status
-		Input               json.RawMessage
-		Output              json.RawMessage
+		Input               sql.Null[pgtype.JSONB]
+		Output              sql.Null[pgtype.JSONB]
 		WorkerID            sql.Null[string]
 	}
 
@@ -59,8 +59,8 @@ func (r Run) ToProto() *workflowv1.Run {
 		WorkflowName:        r.WorkflowName,
 		CreatedAt:           timestamppb.New(r.CreatedAt),
 		Status:              workflowv1.Status(r.Status),
-		Input:               r.Input,
-		Output:              r.Output,
+		Input:               r.Input.V.Bytes,
+		Output:              r.Output.V.Bytes,
 	}
 
 	if r.ScheduledAt.Valid {
@@ -87,8 +87,13 @@ func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 	return database.Write(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) error {
 		const q = `
-			INSERT INTO workflow_run (id, parent_workflow_run_id, workflow_name, created_at, scheduled_at, started_at, completed_at, status, input, output)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			INSERT INTO workflow_run (
+			  id, parent_workflow_run_id, workflow_name, 
+			  created_at, scheduled_at, started_at, 
+		  	  completed_at, status, input, output, 
+			  worker_id
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 			ON CONFLICT (id) DO UPDATE SET
 				scheduled_at = EXCLUDED.scheduled_at,
 				started_at = EXCLUDED.started_at,
@@ -128,7 +133,11 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) (Run, error) {
 		const q = `
-			SELECT id, parent_workflow_run_id, workflow_name, created_at, scheduled_at, started_at, completed_at, status, input, output 
+			SELECT 
+			    id, parent_workflow_run_id, workflow_name, 
+			    created_at, scheduled_at, started_at, 
+			    completed_at, status, input, output, 
+			    worker_id
 			FROM workflow_run WHERE id = $1
 		`
 
@@ -194,6 +203,8 @@ func (pr *PostgresRepository) GetPendingWorkflowRuns(ctx context.Context) ([]Run
 			if err != nil {
 				return nil, err
 			}
+
+			runs = append(runs, run)
 		}
 
 		return runs, rows.Err()

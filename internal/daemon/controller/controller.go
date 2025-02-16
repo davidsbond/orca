@@ -6,7 +6,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/davidsbond/orca/internal/daemon"
-	"github.com/davidsbond/orca/internal/daemon/controller/api"
+	"github.com/davidsbond/orca/internal/daemon/controller/api/controller"
+	workflow_api "github.com/davidsbond/orca/internal/daemon/controller/api/workflow"
 	"github.com/davidsbond/orca/internal/daemon/controller/database"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/task"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/worker"
@@ -34,8 +35,11 @@ func Run(ctx context.Context, config Config) error {
 
 	run := runner.New(workers, workflows, tasks)
 
-	controllerSvc := api.NewControllerService(workers, tasks, workflows)
-	controllerAPI := api.New(controllerSvc)
+	controllerHandler := controller.NewHandler(workers, tasks, workflows)
+	controllerAPI := controller.NewAPI(controllerHandler)
+
+	workflowHandler := workflow_api.NewHandler(workflows)
+	workflowAPI := workflow_api.NewAPI(workflowHandler)
 
 	group, ctx := errgroup.WithContext(ctx)
 
@@ -44,6 +48,7 @@ func Run(ctx context.Context, config Config) error {
 			GRPCPort: config.GRPCPort,
 			GRPCControllers: []daemon.GRPCController{
 				controllerAPI,
+				workflowAPI,
 			},
 		})
 	})
