@@ -11,13 +11,7 @@ import (
 	"github.com/davidsbond/orca/internal/workflow"
 )
 
-type (
-	Task interface {
-		Name() string
-	}
-)
-
-func Execute[Output any](ctx context.Context, t Task, input any) (Output, error) {
+func Execute[Input, Output any](ctx context.Context, t *Implementation[Input, Output], input Input) (Output, error) {
 	var output Output
 
 	params, err := json.Marshal(input)

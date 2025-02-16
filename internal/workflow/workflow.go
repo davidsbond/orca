@@ -27,7 +27,13 @@ type (
 		Output       json.RawMessage
 	}
 
-	ctxKey struct{}
+	Client interface {
+		ScheduleWorkflow(ctx context.Context, runID string, name string, params json.RawMessage) (string, error)
+		GetWorkflowRun(ctx context.Context, runID string) (Run, error)
+	}
+
+	runCtxKey    struct{}
+	clientCtxKey struct{}
 
 	Error struct {
 		Message      string `json:"message"`
@@ -52,10 +58,20 @@ const (
 )
 
 func RunToContext(ctx context.Context, r Run) context.Context {
-	return context.WithValue(ctx, ctxKey{}, r)
+	return context.WithValue(ctx, runCtxKey{}, r)
 }
 
 func RunFromContext(ctx context.Context) (Run, bool) {
-	run, ok := ctx.Value(ctxKey{}).(Run)
+	run, ok := ctx.Value(runCtxKey{}).(Run)
 	return run, ok
+}
+
+func ClientFromContext(ctx context.Context) (Client, bool) {
+	client, ok := ctx.Value(clientCtxKey{}).(Client)
+
+	return client, ok
+}
+
+func ClientToContext(ctx context.Context, client Client) context.Context {
+	return context.WithValue(ctx, clientCtxKey{}, client)
 }

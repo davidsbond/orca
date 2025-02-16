@@ -2,9 +2,9 @@ package main_test
 
 import (
 	"context"
-	"errors"
 	"log/slog"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -33,18 +33,33 @@ type (
 	TestTaskOutput struct {
 		Greeting string
 	}
+
+	TestChildWorkflowInput struct {
+		Name string
+	}
+
+	TestChildWorkflowOutput struct {
+		Extra string
+	}
 )
 
 func testWorkflow() *workflow.Implementation[TestWorkflowInput, TestWorkflowOutput] {
 	return &workflow.Implementation[TestWorkflowInput, TestWorkflowOutput]{
 		WorkflowName: "TestWorkflow",
 		Action: func(ctx context.Context, input TestWorkflowInput) (TestWorkflowOutput, error) {
-			output, err := task.Execute[TestTaskOutput](ctx, testTask(), TestTaskInput{Name: input.Name})
+			taskOutput, err := task.Execute(ctx, testTask(), TestTaskInput{Name: input.Name})
 			if err != nil {
 				return TestWorkflowOutput{}, err
 			}
 
-			return TestWorkflowOutput{Greeting: output.Greeting}, nil
+			workflowOutput, err := workflow.Execute(ctx, testChildWorkflow(), TestChildWorkflowInput{
+				Name: input.Name,
+			})
+			if err != nil {
+				return TestWorkflowOutput{}, err
+			}
+
+			return TestWorkflowOutput{Greeting: taskOutput.Greeting + " " + workflowOutput.Extra}, nil
 		},
 	}
 }
@@ -53,7 +68,30 @@ func testTask() *task.Implementation[TestTaskInput, TestTaskOutput] {
 	return &task.Implementation[TestTaskInput, TestTaskOutput]{
 		TaskName: "TestTask",
 		Action: func(ctx context.Context, input TestTaskInput) (TestTaskOutput, error) {
-			return TestTaskOutput{}, errors.New("test error")
+			return TestTaskOutput{
+				Greeting: "Hello " + input.Name,
+			}, nil
+		},
+	}
+}
+
+func testChildWorkflow() *workflow.Implementation[TestChildWorkflowInput, TestChildWorkflowOutput] {
+	return &workflow.Implementation[TestChildWorkflowInput, TestChildWorkflowOutput]{
+		WorkflowName: "TestChildWorkflow",
+		Action: func(ctx context.Context, input TestChildWorkflowInput) (TestChildWorkflowOutput, error) {
+			taskOutput, err := task.Execute(ctx, testTask(), TestTaskInput{Name: input.Name})
+			if err != nil {
+				return TestChildWorkflowOutput{}, err
+			}
+
+			var builder strings.Builder
+			for i := len(taskOutput.Greeting) - 1; i >= 0; i-- {
+				builder.WriteRune(rune(taskOutput.Greeting[i]))
+			}
+
+			return TestChildWorkflowOutput{
+				Extra: builder.String(),
+			}, nil
 		},
 	}
 }
@@ -62,7 +100,7 @@ func TestWorker(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), time.Hour)
 	defer cancel()
 
-	ctx = log.ToContext(ctx, slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})))
+	ctx = log.ToContext(ctx, slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 
 	err := worker.Run(ctx, worker.Config{
 		ID:                "65e1dee9-d017-46c3-84c0-e39edd548075",
@@ -71,6 +109,7 @@ func TestWorker(t *testing.T) {
 		Port:              8082,
 		Workflows: []workflow2.Workflow{
 			testWorkflow(),
+			testChildWorkflow(),
 		},
 		Tasks: []task2.Task{
 			testTask(),

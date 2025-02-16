@@ -169,7 +169,7 @@ func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
 	run.ScheduledAt.Valid = true
 	run.ScheduledAt.V = time.Now()
 
-	logger.With(slog.String("worker_id", w.ID)).DebugContext(ctx, "assigned workflow to worker")
+	logger.With(slog.String("worker_id", w.ID)).InfoContext(ctx, "assigned workflow to worker")
 
 	if err = s.workflows.Save(ctx, run); err != nil {
 		return err

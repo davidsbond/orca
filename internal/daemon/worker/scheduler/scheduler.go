@@ -35,9 +35,10 @@ type (
 	ControllerClient interface {
 		SetWorkflowRunStatus(ctx context.Context, runID string, status workflow.Status, output json.RawMessage) error
 		SetTaskRunStatus(ctx context.Context, runID string, status task.Status, output json.RawMessage) error
-		ScheduleTask(ctx context.Context, runID string, name string, params json.RawMessage) (string, error)
+		ScheduleTask(ctx context.Context, runID string, name string, input json.RawMessage) (string, error)
 		GetTaskRun(ctx context.Context, runID string) (task.Run, error)
 		GetWorkflowRun(ctx context.Context, runID string) (workflow.Run, error)
+		ScheduleWorkflow(ctx context.Context, runID string, name string, input json.RawMessage) (string, error)
 	}
 )
 
@@ -93,27 +94,33 @@ func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, in
 }
 
 func (s *Scheduler) runWorkflows(ctx context.Context) error {
+	group, ctx := errgroup.WithContext(ctx)
+	group.SetLimit(10)
+
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return group.Wait()
 		case sw := <-s.workflows:
-			if err := s.runWorkflow(ctx, sw); err != nil {
-				return err
-			}
+			group.Go(func() error {
+				return s.runWorkflow(ctx, sw)
+			})
 		}
 	}
 }
 
 func (s *Scheduler) runTasks(ctx context.Context) error {
+	group, ctx := errgroup.WithContext(ctx)
+	group.SetLimit(10)
+
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return group.Wait()
 		case st := <-s.tasks:
-			if err := s.runTask(ctx, st); err != nil {
-				return err
-			}
+			group.Go(func() error {
+				return s.runTask(ctx, st)
+			})
 		}
 	}
 }
@@ -129,6 +136,7 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 	}
 
 	ctx = workflow.RunToContext(ctx, run)
+	ctx = workflow.ClientToContext(ctx, s.controller)
 	ctx = task.ClientToContext(ctx, s.controller)
 
 	logger := log.FromContext(ctx).With(

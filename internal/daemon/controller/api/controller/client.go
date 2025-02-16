@@ -168,3 +168,18 @@ func (c *Client) DeregisterWorker(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (c *Client) ScheduleWorkflow(ctx context.Context, runID string, name string, input json.RawMessage) (string, error) {
+	request := &controllersvcv1.ScheduleWorkflowRequest{
+		ParentWorkflowRunId: runID,
+		WorkflowName:        name,
+		Input:               input,
+	}
+
+	response, err := c.controller.ScheduleWorkflow(ctx, request)
+	if err != nil {
+		return "", fmt.Errorf("failed to schedule workflow: %w", err)
+	}
+
+	return response.GetWorkflowRunId(), nil
+}
