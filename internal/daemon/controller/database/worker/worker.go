@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/davidsbond/orca/internal/daemon/controller/database"
 )
@@ -19,7 +20,7 @@ type (
 	}
 
 	PostgresRepository struct {
-		db *pgx.Conn
+		db *pgxpool.Pool
 	}
 )
 
@@ -27,7 +28,7 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
-func NewPostgresRepository(db *pgx.Conn) *PostgresRepository {
+func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 	return &PostgresRepository{
 		db: db,
 	}
@@ -69,5 +70,73 @@ func (pr *PostgresRepository) Delete(ctx context.Context, id string) error {
 		}
 
 		return nil
+	})
+}
+
+func (pr *PostgresRepository) GetWorkerForTask(ctx context.Context, name string) (Worker, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) (Worker, error) {
+		const q = `
+			SELECT id, advertise_address, workflows, tasks 
+			FROM worker WHERE $1 = ANY(tasks) 
+			ORDER BY RANDOM() LIMIT 1
+		`
+
+		var (
+			worker    Worker
+			workflows pgtype.FlatArray[string]
+			tasks     pgtype.FlatArray[string]
+		)
+
+		err := tx.QueryRow(ctx, q, name).Scan(
+			&worker.ID,
+			&worker.AdvertiseAddress,
+			&workflows,
+			&tasks,
+		)
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return worker, ErrNotFound
+		case err != nil:
+			return worker, err
+		default:
+			worker.Workflows = workflows
+			worker.Tasks = tasks
+
+			return worker, nil
+		}
+	})
+}
+
+func (pr *PostgresRepository) GetWorkerForWorkflow(ctx context.Context, name string) (Worker, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) (Worker, error) {
+		const q = `
+			SELECT id, advertise_address, workflows, tasks 
+			FROM worker WHERE $1 = ANY(workflows) 
+			ORDER BY RANDOM() LIMIT 1
+		`
+
+		var (
+			worker    Worker
+			workflows pgtype.FlatArray[string]
+			tasks     pgtype.FlatArray[string]
+		)
+
+		err := tx.QueryRow(ctx, q, name).Scan(
+			&worker.ID,
+			&worker.AdvertiseAddress,
+			&workflows,
+			&tasks,
+		)
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return worker, ErrNotFound
+		case err != nil:
+			return worker, err
+		default:
+			worker.Workflows = workflows
+			worker.Tasks = tasks
+
+			return worker, nil
+		}
 	})
 }

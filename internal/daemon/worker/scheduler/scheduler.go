@@ -69,10 +69,6 @@ func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow
 	case <-ctx.Done():
 		return ctx.Err()
 	case s.workflows <- sw:
-		if err := s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusScheduled, nil); err != nil {
-			return err
-		}
-
 		return nil
 	}
 }
@@ -88,10 +84,6 @@ func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, in
 	case <-ctx.Done():
 		return ctx.Err()
 	case s.tasks <- st:
-		if err := s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusScheduled, nil); err != nil {
-			return err
-		}
-
 		return nil
 	}
 }

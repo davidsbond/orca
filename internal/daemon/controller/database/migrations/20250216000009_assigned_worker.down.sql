@@ -1,0 +1,8 @@
+BEGIN;
+
+ALTER TABLE IF EXISTS workflow_run
+    DROP COLUMN IF EXISTS worker_id;
+ALTER TABLE IF EXISTS task_run
+    DROP COLUMN IF EXISTS worker_id;
+
+COMMIT;

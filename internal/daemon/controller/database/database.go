@@ -14,14 +14,15 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func Open(ctx context.Context, addr string) (*pgx.Conn, error) {
+func Open(ctx context.Context, addr string) (*pgxpool.Pool, error) {
 	if err := MigrateUp(addr); err != nil {
 		return nil, err
 	}
 
-	db, err := pgx.Connect(ctx, addr)
+	db, err := pgxpool.New(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -34,8 +35,8 @@ type (
 	ReadTransaction[T any] func(ctx context.Context, tx pgx.Tx) (T, error)
 )
 
-func Write(ctx context.Context, db *pgx.Conn, fn WriteTransaction) error {
-	tx, err := db.BeginTx(ctx, pgx.TxOptions{})
+func Write(ctx context.Context, db *pgxpool.Pool, fn WriteTransaction) error {
+	tx, err := db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadWrite})
 	if err != nil {
 		return err
 	}
@@ -51,7 +52,7 @@ func Write(ctx context.Context, db *pgx.Conn, fn WriteTransaction) error {
 	return tx.Commit(ctx)
 }
 
-func Read[T any](ctx context.Context, db *pgx.Conn, fn ReadTransaction[T]) (T, error) {
+func Read[T any](ctx context.Context, db *pgxpool.Pool, fn ReadTransaction[T]) (T, error) {
 	var result T
 
 	tx, err := db.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})

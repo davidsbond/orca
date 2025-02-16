@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/davidsbond/orca/internal/daemon/controller/database"
@@ -26,12 +27,13 @@ type (
 		Status        Status
 		Input         json.RawMessage
 		Output        json.RawMessage
+		WorkerID      sql.Null[string]
 	}
 
 	Status int
 
 	PostgresRepository struct {
-		db *pgx.Conn
+		db *pgxpool.Pool
 	}
 )
 
@@ -47,6 +49,7 @@ const (
 var (
 	ErrNotFound            = errors.New("not found")
 	ErrWorkflowRunNotFound = errors.New("workflow run does not exist")
+	ErrWorkerNotFound      = errors.New("worker does not exist")
 )
 
 func (r Run) ToProto() *taskv1.Run {
@@ -75,7 +78,7 @@ func (r Run) ToProto() *taskv1.Run {
 	return run
 }
 
-func NewPostgresRepository(db *pgx.Conn) *PostgresRepository {
+func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 	return &PostgresRepository{
 		db: db,
 	}
@@ -84,15 +87,21 @@ func NewPostgresRepository(db *pgx.Conn) *PostgresRepository {
 func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 	return database.Write(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) error {
 		const q = `
-			INSERT INTO task_run (id, workflow_run_id, task_name, created_at, scheduled_at, started_at, completed_at, status, input, output)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			INSERT INTO task_run (
+			  id, workflow_run_id, task_name, 
+			  created_at, scheduled_at, started_at,
+			  completed_at, status, input, output,
+			  worker_id
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 			ON CONFLICT (id) DO UPDATE SET
 				scheduled_at = EXCLUDED.scheduled_at,
 				started_at = EXCLUDED.started_at,
 				completed_at = EXCLUDED.completed_at,
 				status = EXCLUDED.status,
 				input = EXCLUDED.input,
-				output = EXCLUDED.output	
+				output = EXCLUDED.output,
+				worker_id = EXCLUDED.worker_id
 		`
 
 		_, err := tx.Exec(ctx, q,
@@ -106,10 +115,13 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 			run.Status,
 			run.Input,
 			run.Output,
+			run.WorkerID,
 		)
 		switch {
 		case database.IsForeignKeyViolation(err, "workflow_run_id"):
 			return ErrWorkflowRunNotFound
+		case database.IsForeignKeyViolation(err, "worker_id"):
+			return ErrWorkerNotFound
 		case err != nil:
 			return err
 		default:
@@ -137,14 +149,59 @@ func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 			&run.Status,
 			&run.Input,
 			&run.Output,
+			&run.WorkerID,
 		)
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, pgx.ErrNoRows):
 			return run, ErrNotFound
 		case err != nil:
 			return run, err
 		default:
 			return run, nil
 		}
+	})
+}
+
+func (pr *PostgresRepository) GetPendingTaskRuns(ctx context.Context) ([]Run, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) ([]Run, error) {
+		const q = `
+			SELECT 
+			    id, workflow_run_id, task_name, 
+			    created_at, scheduled_at, 
+			    started_at, completed_at, 
+			    status, input, output,
+			    worker_id
+			FROM task_run WHERE (status = $1 AND worker_id IS NULL)
+		`
+
+		var runs []Run
+		rows, err := tx.Query(ctx, q, StatusPending)
+		if err != nil {
+			return nil, err
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var run Run
+			err = rows.Scan(
+				&run.ID,
+				&run.WorkflowRunID,
+				&run.TaskName,
+				&run.CreatedAt,
+				&run.ScheduledAt,
+				&run.StartedAt,
+				&run.CompletedAt,
+				&run.Status,
+				&run.Input,
+				&run.Output,
+				&run.WorkerID,
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return runs, rows.Err()
 	})
 }

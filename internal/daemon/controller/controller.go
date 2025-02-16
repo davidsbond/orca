@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -55,10 +54,8 @@ func Run(ctx context.Context, config Config) error {
 
 	group.Go(func() error {
 		<-ctx.Done()
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-
-		return db.Close(ctx)
+		db.Close()
+		return nil
 	})
 
 	return group.Wait()

@@ -9,8 +9,8 @@ import (
 
 	"github.com/davidsbond/orca/internal/daemon/controller/database/task"
 	"github.com/davidsbond/orca/internal/daemon/controller/database/worker"
+	"github.com/davidsbond/orca/internal/daemon/controller/database/workflow"
 	"github.com/davidsbond/orca/internal/daemon/worker/client"
-	"github.com/davidsbond/orca/internal/workflow"
 )
 
 type (
@@ -31,6 +31,7 @@ type (
 	}
 
 	WorkflowRepository interface {
+		Save(ctx context.Context, run workflow.Run) error
 		GetPendingWorkflowRuns(ctx context.Context) ([]workflow.Run, error)
 	}
 )
@@ -110,15 +111,24 @@ func (s *Runner) runTask(ctx context.Context, run task.Run) error {
 		return err
 	}
 
-	workerClient, err := client.Dial(w.AdvertiseAddress)
+	wrk, err := client.Dial(w.AdvertiseAddress)
 	if err != nil {
 		return err
 	}
 
-	return errors.Join(
-		workerClient.RunTask(ctx, run.ID, run.TaskName, run.Input),
-		workerClient.Close(),
-	)
+	run.WorkerID.Valid = true
+	run.WorkerID.V = w.ID
+	run.Status = task.StatusScheduled
+
+	if err = s.tasks.Save(ctx, run); err != nil {
+		return err
+	}
+
+	if err = wrk.RunTask(ctx, run.ID, run.TaskName, run.Input); err != nil {
+		return err
+	}
+
+	return wrk.Close()
 }
 
 func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
@@ -130,13 +140,22 @@ func (s *Runner) runWorkflow(ctx context.Context, run workflow.Run) error {
 		return err
 	}
 
-	workerClient, err := client.Dial(w.AdvertiseAddress)
+	wrk, err := client.Dial(w.AdvertiseAddress)
 	if err != nil {
 		return err
 	}
 
-	return errors.Join(
-		workerClient.RunWorkflow(ctx, run.ID, run.WorkflowName, run.Input),
-		workerClient.Close(),
-	)
+	run.WorkerID.Valid = true
+	run.WorkerID.V = w.ID
+	run.Status = workflow.StatusScheduled
+
+	if err = s.workflows.Save(ctx, run); err != nil {
+		return err
+	}
+
+	if err = wrk.RunWorkflow(ctx, run.ID, run.WorkflowName, run.Input); err != nil {
+		return err
+	}
+
+	return wrk.Close()
 }

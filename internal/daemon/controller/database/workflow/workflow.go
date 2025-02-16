@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/davidsbond/orca/internal/daemon/controller/database"
@@ -26,18 +27,20 @@ type (
 		Status              Status
 		Input               json.RawMessage
 		Output              json.RawMessage
+		WorkerID            sql.Null[string]
 	}
 
 	Status int
 
 	PostgresRepository struct {
-		db *pgx.Conn
+		db *pgxpool.Pool
 	}
 )
 
 var (
 	ErrNotFound               = errors.New("not found")
 	ErrParentWorkflowNotFound = errors.New("parent workflow not found")
+	ErrWorkerNotFound         = errors.New("worker not found")
 )
 
 const (
@@ -75,7 +78,7 @@ func (r Run) ToProto() *workflowv1.Run {
 	return run
 }
 
-func NewPostgresRepository(db *pgx.Conn) *PostgresRepository {
+func NewPostgresRepository(db *pgxpool.Pool) *PostgresRepository {
 	return &PostgresRepository{
 		db: db,
 	}
@@ -92,7 +95,8 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 				completed_at = EXCLUDED.completed_at,
 				status = EXCLUDED.status,
 				input = EXCLUDED.input,
-				output = EXCLUDED.output	
+				output = EXCLUDED.output,
+				worker_id = EXCLUDED.worker_id
 		`
 
 		_, err := tx.Exec(ctx, q,
@@ -106,10 +110,13 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 			run.Status,
 			run.Input,
 			run.Output,
+			run.WorkerID,
 		)
 		switch {
 		case database.IsForeignKeyViolation(err, "parent_workflow_run_id"):
 			return ErrParentWorkflowNotFound
+		case database.IsForeignKeyViolation(err, "worker_id"):
+			return ErrWorkerNotFound
 		case err != nil:
 			return err
 		default:
@@ -137,14 +144,58 @@ func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 			&run.Status,
 			&run.Input,
 			&run.Output,
+			&run.WorkerID,
 		)
 		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		case errors.Is(err, pgx.ErrNoRows):
 			return run, ErrNotFound
 		case err != nil:
 			return run, err
 		default:
 			return run, nil
 		}
+	})
+}
+
+func (pr *PostgresRepository) GetPendingWorkflowRuns(ctx context.Context) ([]Run, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) ([]Run, error) {
+		const q = `
+			SELECT 
+			    id, parent_workflow_run_id, workflow_name, 
+			    created_at, scheduled_at, started_at, 
+			    completed_at, status, input, output,
+			    worker_id
+			FROM workflow_run WHERE (status = $1 AND worker_id IS NULL)
+		`
+
+		var runs []Run
+		rows, err := tx.Query(ctx, q, StatusPending)
+		if err != nil {
+			return nil, err
+		}
+
+		defer rows.Close()
+		for rows.Next() {
+			var run Run
+			err = rows.Scan(
+				&run.ID,
+				&run.ParentWorkflowRunID,
+				&run.WorkflowName,
+				&run.CreatedAt,
+				&run.ScheduledAt,
+				&run.StartedAt,
+				&run.CompletedAt,
+				&run.Status,
+				&run.Input,
+				&run.Output,
+				&run.WorkerID,
+			)
+
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return runs, rows.Err()
 	})
 }
