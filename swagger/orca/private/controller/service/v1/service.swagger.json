@@ -1,14 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "orca/private/worker/service/v1/service.proto",
+    "title": "orca/private/controller/service/v1/service.proto",
     "version": "version not set"
   },
-  "tags": [
-    {
-      "name": "WorkerService"
-    }
-  ],
   "consumes": [
     "application/json"
   ],
@@ -17,16 +12,7 @@
   ],
   "paths": {},
   "definitions": {
-    "protobufAny": {
-      "type": "object",
-      "properties": {
-        "@type": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": {}
-    },
-    "rpcStatus": {
+    "googlerpcStatus": {
       "type": "object",
       "properties": {
         "code": {
@@ -45,11 +31,14 @@
         }
       }
     },
-    "v1RunTaskResponse": {
-      "type": "object"
-    },
-    "v1RunWorkflowResponse": {
-      "type": "object"
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
     }
   }
 }

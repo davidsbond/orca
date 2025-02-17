@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net"
-
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"net/http"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,25 +18,34 @@ import (
 
 type (
 	Config struct {
-		GRPCPort        int
-		GRPCControllers []GRPCController
+		GRPCPort    int
+		HTTPPort    int
+		ServeHTTP   bool
+		Controllers []Controller
 	}
 
-	GRPCController interface {
-		Register(r grpc.ServiceRegistrar)
+	Controller interface {
+		RegisterGRPC(r grpc.ServiceRegistrar)
+		RegisterHTTP(ctx context.Context, r *runtime.ServeMux)
 	}
 )
 
 func Run(ctx context.Context, cfg Config) error {
 	group, ctx := errgroup.WithContext(ctx)
 	group.Go(func() error {
-		return runGRPC(ctx, cfg.GRPCPort, cfg.GRPCControllers...)
+		return runGRPC(ctx, cfg.GRPCPort, cfg.Controllers...)
 	})
+
+	if cfg.ServeHTTP {
+		group.Go(func() error {
+			return runHTTP(ctx, cfg.HTTPPort, cfg.Controllers...)
+		})
+	}
 
 	return group.Wait()
 }
 
-func runGRPC(ctx context.Context, port int, controllers ...GRPCController) error {
+func runGRPC(ctx context.Context, port int, controllers ...Controller) error {
 	grpcServer := grpc.NewServer(
 		grpc.ChainUnaryInterceptor(
 			logging.UnaryServerInterceptor(log.Interceptor(ctx)),
@@ -46,8 +56,9 @@ func runGRPC(ctx context.Context, port int, controllers ...GRPCController) error
 			recovery.StreamServerInterceptor(),
 		),
 	)
+
 	for _, ctrl := range controllers {
-		ctrl.Register(grpcServer)
+		ctrl.RegisterGRPC(grpcServer)
 	}
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
@@ -63,6 +74,30 @@ func runGRPC(ctx context.Context, port int, controllers ...GRPCController) error
 		<-ctx.Done()
 		grpcServer.GracefulStop()
 		return ctx.Err()
+	})
+
+	return group.Wait()
+}
+
+func runHTTP(ctx context.Context, port int, controllers ...Controller) error {
+	httpHandler := runtime.NewServeMux()
+
+	for _, ctrl := range controllers {
+		ctrl.RegisterHTTP(ctx, httpHandler)
+	}
+
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: httpHandler,
+	}
+
+	group, ctx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		return httpServer.ListenAndServe()
+	})
+	group.Go(func() error {
+		<-ctx.Done()
+		return httpServer.Shutdown(context.Background())
 	})
 
 	return group.Wait()

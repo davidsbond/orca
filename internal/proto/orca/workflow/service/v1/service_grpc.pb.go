@@ -27,7 +27,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkflowServiceClient interface {
+	// Schedule a workflow.
 	Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error)
+	// Get a workflow run.
 	GetRun(ctx context.Context, in *GetRunRequest, opts ...grpc.CallOption) (*GetRunResponse, error)
 }
 
@@ -63,7 +65,9 @@ func (c *workflowServiceClient) GetRun(ctx context.Context, in *GetRunRequest, o
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility.
 type WorkflowServiceServer interface {
+	// Schedule a workflow.
 	Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error)
+	// Get a workflow run.
 	GetRun(context.Context, *GetRunRequest) (*GetRunResponse, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }

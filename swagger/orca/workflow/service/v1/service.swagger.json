@@ -1,0 +1,222 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Workflows",
+    "version": "v1"
+  },
+  "tags": [
+    {
+      "name": "Workflow Service",
+      "description": "The workflow service provides endpoints for scheduling \u0026 managing orca workflows"
+    }
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/workflow/run/{workflowRunId}": {
+      "get": {
+        "summary": "Get a workflow run.",
+        "description": "Returns the status of the specified workflow run.",
+        "operationId": "WorkflowService_GetRun",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRunResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "workflowRunId",
+            "description": "The unique identifier of the workflow run.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Workflow Service"
+        ]
+      }
+    },
+    "/v1/workflow/{workflowName}": {
+      "post": {
+        "summary": "Schedule a workflow.",
+        "description": "Schedule a workflow run. Providing its name and JSON input",
+        "operationId": "WorkflowService_Schedule",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ScheduleResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "workflowName",
+            "description": "The name of the workflow to schedule.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/WorkflowServiceScheduleBody"
+            }
+          }
+        ],
+        "tags": [
+          "Workflow Service"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "WorkflowServiceScheduleBody": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "format": "byte",
+          "description": "The JSON encoded input to provide to the workflow."
+        }
+      }
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "v1GetRunResponse": {
+      "type": "object",
+      "properties": {
+        "workflowRun": {
+          "$ref": "#/definitions/v1Run",
+          "title": "The workflow run details"
+        }
+      }
+    },
+    "v1Run": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "description": "The unique identifier of the workflow run."
+        },
+        "parentWorkflowRunId": {
+          "type": "string",
+          "description": "The unique identifier of the parent workflow run this workflow was run within. Assumed to be the root if this\nis not provided."
+        },
+        "workflowName": {
+          "type": "string",
+          "description": "The name of the workflow being ran."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was created."
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was scheduled."
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was started."
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the workflow run was completed."
+        },
+        "status": {
+          "$ref": "#/definitions/workflowv1Status",
+          "description": "The status of the workflow run."
+        },
+        "input": {
+          "type": "string",
+          "format": "byte",
+          "description": "The JSON encoded input provided to the workflow run."
+        },
+        "output": {
+          "type": "string",
+          "format": "byte",
+          "description": "The JSON encoded output of the workflow run."
+        }
+      },
+      "title": "The Run type represents the current state of a single workflow run"
+    },
+    "v1ScheduleResponse": {
+      "type": "object",
+      "properties": {
+        "workflowRunId": {
+          "type": "string",
+          "description": "The unique identifier of the newly created workflow run."
+        }
+      }
+    },
+    "workflowv1Status": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_PENDING",
+        "STATUS_SCHEDULED",
+        "STATUS_RUNNING",
+        "STATUS_COMPLETE",
+        "STATUS_FAILED"
+      ],
+      "default": "STATUS_UNSPECIFIED",
+      "description": "The Status enumeration represents the status of a workflow run.\n\n - STATUS_UNSPECIFIED: The workflow run has an unknown status.\n - STATUS_PENDING: The workflow run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The workflow run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The workflow run is running.\n - STATUS_COMPLETE: The workflow run completed successfully.\n - STATUS_FAILED: The workflow run failed."
+    }
+  }
+}

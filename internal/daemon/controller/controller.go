@@ -45,8 +45,10 @@ func Run(ctx context.Context, config Config) error {
 
 	group.Go(func() error {
 		return daemon.Run(ctx, daemon.Config{
-			GRPCPort: config.GRPCPort,
-			GRPCControllers: []daemon.GRPCController{
+			GRPCPort:  config.GRPCPort,
+			HTTPPort:  config.HTTPPort,
+			ServeHTTP: true,
+			Controllers: []daemon.Controller{
 				controllerAPI,
 				workflowAPI,
 			},

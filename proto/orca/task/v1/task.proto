@@ -24,9 +24,9 @@ message Run {
   google.protobuf.Timestamp completed_at = 7;
   // The status of the task run.
   Status status = 8;
-  // The encoded input provided to the task run.
+  // The JSON encoded input provided to the task run.
   bytes input = 9;
-  // The encoding output of the task run.
+  // The JSON encoded output of the task run.
   bytes output = 10;
 }
 

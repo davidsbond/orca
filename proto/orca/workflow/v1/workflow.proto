@@ -25,9 +25,9 @@ message Run {
   google.protobuf.Timestamp completed_at = 7;
   // The status of the workflow run.
   Status status = 8;
-  // The encoded input provided to the workflow run.
+  // The JSON encoded input provided to the workflow run.
   bytes input = 9;
-  // The encoding output of the workflow run.
+  // The JSON encoded output of the workflow run.
   bytes output = 10;
 }
 

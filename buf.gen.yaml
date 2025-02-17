@@ -11,5 +11,4 @@ plugins:
     out: internal/proto
     opt: paths=source_relative
   - local: [go, tool, protoc-gen-openapiv2]
-    out: internal/proto
-    opt: enums_as_ints=true
+    out: swagger

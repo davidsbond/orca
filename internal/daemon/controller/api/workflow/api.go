@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,8 +32,14 @@ func NewAPI(service Service) *API {
 	return &API{service: service}
 }
 
-func (api *API) Register(r grpc.ServiceRegistrar) {
+func (api *API) RegisterGRPC(r grpc.ServiceRegistrar) {
 	workflowsvcv1.RegisterWorkflowServiceServer(r, api)
+}
+
+func (api *API) RegisterHTTP(ctx context.Context, r *runtime.ServeMux) {
+	if err := workflowsvcv1.RegisterWorkflowServiceHandlerServer(ctx, r, api); err != nil {
+		panic(err)
+	}
 }
 
 func (api *API) Schedule(ctx context.Context, request *workflowsvcv1.ScheduleRequest) (*workflowsvcv1.ScheduleResponse, error) {

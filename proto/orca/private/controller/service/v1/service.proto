@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package orca.private.controller.service.v1;
 
+import "google/api/visibility.proto";
 import "orca/private/worker/v1/worker.proto";
 import "orca/task/v1/task.proto";
 import "orca/workflow/v1/workflow.proto";
@@ -11,6 +12,8 @@ option go_package = "github.com/davidsbond/orca/internal/proto/orca/private/cont
 // The ControllerService contains endpoints that are exposed on orca controller instances and relate specifically
 // to controller operations. This service should only be used by workers.
 service ControllerService {
+  option (google.api.api_visibility) = {restriction: "PRIVATE"};
+
   // Register a Worker
   rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse);
 

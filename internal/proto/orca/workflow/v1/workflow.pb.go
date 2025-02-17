@@ -107,9 +107,9 @@ type Run struct {
 	CompletedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=completed_at,json=completedAt,proto3" json:"completed_at,omitempty"`
 	// The status of the workflow run.
 	Status Status `protobuf:"varint,8,opt,name=status,proto3,enum=orca.workflow.v1.Status" json:"status,omitempty"`
-	// The encoded input provided to the workflow run.
+	// The JSON encoded input provided to the workflow run.
 	Input []byte `protobuf:"bytes,9,opt,name=input,proto3" json:"input,omitempty"`
-	// The encoding output of the workflow run.
+	// The JSON encoded output of the workflow run.
 	Output        []byte `protobuf:"bytes,10,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

@@ -2,28 +2,64 @@ syntax = "proto3";
 
 package orca.workflow.service.v1;
 
+import "google/api/annotations.proto";
 import "orca/workflow/v1/workflow.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/davidsbond/orca/internal/proto/orca/workflow/service/v1;workflowsvcv1";
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Workflows"
+    version: "v1"
+  }
+  schemes: HTTP
+  schemes: HTTPS
+  consumes: "application/json"
+  produces: "application/json"
+};
 
 service WorkflowService {
-  rpc Schedule(ScheduleRequest) returns (ScheduleResponse);
-  rpc GetRun(GetRunRequest) returns (GetRunResponse);
+  option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_tag) = {
+    name: "Workflow Service"
+    description: "The workflow service provides endpoints for scheduling & managing orca workflows"
+  };
+
+  // Schedule a workflow.
+  rpc Schedule(ScheduleRequest) returns (ScheduleResponse) {
+    option (google.api.http) = {
+      post: "/v1/workflow/{workflow_name}"
+      body: "*"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Schedule a workflow run. Providing its name and JSON input"};
+  }
+
+  // Get a workflow run.
+  rpc GetRun(GetRunRequest) returns (GetRunResponse) {
+    option (google.api.http) = {get: "/v1/workflow/run/{workflow_run_id}"};
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Returns the status of the specified workflow run."};
+  }
 }
 
 message ScheduleRequest {
+  // The name of the workflow to schedule.
   string workflow_name = 1;
+  // The JSON encoded input to provide to the workflow.
   bytes input = 2;
 }
 
 message ScheduleResponse {
+  // The unique identifier of the newly created workflow run.
   string workflow_run_id = 1;
 }
 
 message GetRunRequest {
+  // The unique identifier of the workflow run.
   string workflow_run_id = 1;
 }
 
 message GetRunResponse {
+  // The workflow run details
   orca.workflow.v1.Run workflow_run = 1;
 }

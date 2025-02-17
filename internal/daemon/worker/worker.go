@@ -51,7 +51,7 @@ func Run(ctx context.Context, cfg Config) error {
 	group.Go(func() error {
 		return daemon.Run(ctx, daemon.Config{
 			GRPCPort: cfg.Port,
-			GRPCControllers: []daemon.GRPCController{
+			Controllers: []daemon.Controller{
 				workerAPI,
 			},
 		})

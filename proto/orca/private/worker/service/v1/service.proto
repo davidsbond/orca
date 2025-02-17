@@ -2,11 +2,15 @@ syntax = "proto3";
 
 package orca.private.worker.service.v1;
 
+import "google/api/visibility.proto";
+
 option go_package = "github.com/davidsbond/orca/internal/proto/orca/private/worker/service/v1;workersvcv1";
 
 // The WorkerService contains endpoints that are exposed on orca worker instances and relate specifically
 // to worker operations. This service should only be used by controllers.
 service WorkerService {
+  option (google.api.api_visibility) = {restriction: "PRIVATE"};
+
   // Run a Workflow.
   rpc RunWorkflow(RunWorkflowRequest) returns (RunWorkflowResponse);
 
