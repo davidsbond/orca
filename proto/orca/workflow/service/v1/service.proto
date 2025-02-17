@@ -27,7 +27,7 @@ service WorkflowService {
   // Schedule a workflow.
   rpc Schedule(ScheduleRequest) returns (ScheduleResponse) {
     option (google.api.http) = {
-      post: "/v1/workflow/{workflow_name}"
+      post: "/v1/workflow/{workflow_name}/run"
       body: "*"
     };
 
@@ -36,9 +36,16 @@ service WorkflowService {
 
   // Get a workflow run.
   rpc GetRun(GetRunRequest) returns (GetRunResponse) {
-    option (google.api.http) = {get: "/v1/workflow/run/{workflow_run_id}"};
+    option (google.api.http) = {get: "/v1/workflow/{workflow_name}/run/{workflow_run_id}"};
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Returns the status of the specified workflow run."};
+  }
+
+  // Describe a workflow run.
+  rpc DescribeRun(DescribeRunRequest) returns (DescribeRunResponse) {
+    option (google.api.http) = {get: "/v1/workflow/{workflow_name}/run/{workflow_run_id}/describe"};
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Returns a full description of a workflow run, including tasks, child workflows etc."};
   }
 }
 
@@ -57,9 +64,23 @@ message ScheduleResponse {
 message GetRunRequest {
   // The unique identifier of the workflow run.
   string workflow_run_id = 1;
+  // The name of the workflow.
+  string workflow_name = 2;
 }
 
 message GetRunResponse {
   // The workflow run details
   orca.workflow.v1.Run workflow_run = 1;
+}
+
+message DescribeRunRequest {
+  // The unique identifier of the workflow run.
+  string workflow_run_id = 1;
+  // The name of the workflow.
+  string workflow_name = 2;
+}
+
+message DescribeRunResponse {
+  // The description of the workflow run and its child actions.
+  orca.workflow.v1.WorkflowRunDescription description = 1;
 }

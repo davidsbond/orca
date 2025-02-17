@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,6 +24,7 @@ type (
 	Service interface {
 		ScheduleWorkflow(ctx context.Context, name string, input json.RawMessage) (string, error)
 		GetRun(ctx context.Context, runID string) (workflow.Run, error)
+		DescribeRun(ctx context.Context, runID string) (Description, error)
 	}
 )
 
@@ -62,5 +62,17 @@ func (api *API) GetRun(ctx context.Context, request *workflowsvcv1.GetRunRequest
 		return nil, status.Errorf(codes.Internal, "failed to get workflow run %s: %v", request.GetWorkflowRunId(), err)
 	default:
 		return &workflowsvcv1.GetRunResponse{WorkflowRun: run.ToProto()}, nil
+	}
+}
+
+func (api *API) DescribeRun(ctx context.Context, request *workflowsvcv1.DescribeRunRequest) (*workflowsvcv1.DescribeRunResponse, error) {
+	description, err := api.service.DescribeRun(ctx, request.GetWorkflowRunId())
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return nil, status.Errorf(codes.NotFound, "workflow %s does not exist", request.GetWorkflowRunId())
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to describe workflow run %s: %v", request.GetWorkflowRunId(), err)
+	default:
+		return &workflowsvcv1.DescribeRunResponse{Description: description.ToProto()}, nil
 	}
 }

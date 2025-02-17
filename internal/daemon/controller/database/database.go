@@ -116,3 +116,23 @@ func MigrateUp(addr string) error {
 		return errors.Join(migration.Close())
 	}
 }
+
+func ScanAll[Record any](ctx context.Context, rows pgx.Rows, fn func(record *Record) []any) ([]Record, error) {
+	defer rows.Close()
+	results := make([]Record, 0)
+	for rows.Next() {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+
+		result := new(Record)
+		fields := fn(result)
+		if err := rows.Scan(fields...); err != nil {
+			return nil, err
+		}
+
+		results = append(results, *result)
+	}
+
+	return results, rows.Err()
+}

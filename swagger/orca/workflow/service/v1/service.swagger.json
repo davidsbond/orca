@@ -21,40 +21,7 @@
     "application/json"
   ],
   "paths": {
-    "/v1/workflow/run/{workflowRunId}": {
-      "get": {
-        "summary": "Get a workflow run.",
-        "description": "Returns the status of the specified workflow run.",
-        "operationId": "WorkflowService_GetRun",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetRunResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/googlerpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "workflowRunId",
-            "description": "The unique identifier of the workflow run.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Workflow Service"
-        ]
-      }
-    },
-    "/v1/workflow/{workflowName}": {
+    "/v1/workflow/{workflowName}/run": {
       "post": {
         "summary": "Schedule a workflow.",
         "description": "Schedule a workflow run. Providing its name and JSON input",
@@ -94,6 +61,86 @@
           "Workflow Service"
         ]
       }
+    },
+    "/v1/workflow/{workflowName}/run/{workflowRunId}": {
+      "get": {
+        "summary": "Get a workflow run.",
+        "description": "Returns the status of the specified workflow run.",
+        "operationId": "WorkflowService_GetRun",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRunResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "workflowName",
+            "description": "The name of the workflow.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "workflowRunId",
+            "description": "The unique identifier of the workflow run.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Workflow Service"
+        ]
+      }
+    },
+    "/v1/workflow/{workflowName}/run/{workflowRunId}/describe": {
+      "get": {
+        "summary": "Describe a workflow run.",
+        "description": "Returns a full description of a workflow run, including tasks, child workflows etc.",
+        "operationId": "WorkflowService_DescribeRun",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DescribeRunResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "workflowName",
+            "description": "The name of the workflow.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "workflowRunId",
+            "description": "The unique identifier of the workflow run.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Workflow Service"
+        ]
+      }
     }
   },
   "definitions": {
@@ -126,25 +173,72 @@
         }
       }
     },
-    "protobufAny": {
+    "orcataskv1Run": {
       "type": "object",
       "properties": {
-        "@type": {
-          "type": "string"
+        "runId": {
+          "type": "string",
+          "description": "The unique identifier of the task run."
+        },
+        "workflowRunId": {
+          "type": "string",
+          "description": "The unique identifier of the workflow run this task was run within."
+        },
+        "taskName": {
+          "type": "string",
+          "description": "The name of the task being ran."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was created."
+        },
+        "scheduledAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was scheduled."
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was started."
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the task run was completed."
+        },
+        "status": {
+          "$ref": "#/definitions/orcataskv1Status",
+          "description": "The status of the task run."
+        },
+        "input": {
+          "type": "string",
+          "format": "byte",
+          "description": "The JSON encoded input provided to the task run."
+        },
+        "output": {
+          "type": "string",
+          "format": "byte",
+          "description": "The JSON encoded output of the task run."
         }
       },
-      "additionalProperties": {}
+      "title": "The Run type represents the current state of a single task run"
     },
-    "v1GetRunResponse": {
-      "type": "object",
-      "properties": {
-        "workflowRun": {
-          "$ref": "#/definitions/v1Run",
-          "title": "The workflow run details"
-        }
-      }
+    "orcataskv1Status": {
+      "type": "string",
+      "enum": [
+        "STATUS_UNSPECIFIED",
+        "STATUS_PENDING",
+        "STATUS_SCHEDULED",
+        "STATUS_RUNNING",
+        "STATUS_COMPLETE",
+        "STATUS_FAILED"
+      ],
+      "default": "STATUS_UNSPECIFIED",
+      "description": "The Status enumeration represents the status of a task run.\n\n - STATUS_UNSPECIFIED: The task run has an unknown status.\n - STATUS_PENDING: The task run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The task run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The task run is running.\n - STATUS_COMPLETE: The task run completed successfully.\n - STATUS_FAILED: The task run failed."
     },
-    "v1Run": {
+    "orcaworkflowv1Run": {
       "type": "object",
       "properties": {
         "runId": {
@@ -180,7 +274,7 @@
           "description": "When the workflow run was completed."
         },
         "status": {
-          "$ref": "#/definitions/workflowv1Status",
+          "$ref": "#/definitions/orcaworkflowv1Status",
           "description": "The status of the workflow run."
         },
         "input": {
@@ -196,16 +290,7 @@
       },
       "title": "The Run type represents the current state of a single workflow run"
     },
-    "v1ScheduleResponse": {
-      "type": "object",
-      "properties": {
-        "workflowRunId": {
-          "type": "string",
-          "description": "The unique identifier of the newly created workflow run."
-        }
-      }
-    },
-    "workflowv1Status": {
+    "orcaworkflowv1Status": {
       "type": "string",
       "enum": [
         "STATUS_UNSPECIFIED",
@@ -217,6 +302,84 @@
       ],
       "default": "STATUS_UNSPECIFIED",
       "description": "The Status enumeration represents the status of a workflow run.\n\n - STATUS_UNSPECIFIED: The workflow run has an unknown status.\n - STATUS_PENDING: The workflow run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The workflow run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The workflow run is running.\n - STATUS_COMPLETE: The workflow run completed successfully.\n - STATUS_FAILED: The workflow run failed."
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "v1DescribeRunResponse": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "$ref": "#/definitions/v1WorkflowRunDescription",
+          "description": "The description of the workflow run and its child actions."
+        }
+      }
+    },
+    "v1GetRunResponse": {
+      "type": "object",
+      "properties": {
+        "workflowRun": {
+          "$ref": "#/definitions/orcaworkflowv1Run",
+          "title": "The workflow run details"
+        }
+      }
+    },
+    "v1ScheduleResponse": {
+      "type": "object",
+      "properties": {
+        "workflowRunId": {
+          "type": "string",
+          "description": "The unique identifier of the newly created workflow run."
+        }
+      }
+    },
+    "v1TaskRunDescription": {
+      "type": "object",
+      "properties": {
+        "run": {
+          "$ref": "#/definitions/orcataskv1Run",
+          "description": "The task run data."
+        }
+      },
+      "description": "The TaskRunDescription type represents full details of a task run."
+    },
+    "v1WorkflowAction": {
+      "type": "object",
+      "properties": {
+        "workflowRun": {
+          "$ref": "#/definitions/v1WorkflowRunDescription",
+          "description": "A child workflow the parent ran."
+        },
+        "taskRun": {
+          "$ref": "#/definitions/v1TaskRunDescription",
+          "description": "A task the parent ran."
+        }
+      },
+      "description": "The WorkflowAction type describes an action taken by a workflow. This is typically a child workflow or a task."
+    },
+    "v1WorkflowRunDescription": {
+      "type": "object",
+      "properties": {
+        "run": {
+          "$ref": "#/definitions/orcaworkflowv1Run",
+          "description": "The workflow run data."
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1WorkflowAction"
+          },
+          "description": "The child workflows and tasks performed during this run. These will be ordered by their creation."
+        }
+      },
+      "description": "The WorkflowRunDescription type represents full details of a workflow run. Including the child workflows and\ntasks that it executed."
     }
   }
 }

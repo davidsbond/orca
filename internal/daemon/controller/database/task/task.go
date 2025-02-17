@@ -178,16 +178,13 @@ func (pr *PostgresRepository) GetPendingTaskRuns(ctx context.Context) ([]Run, er
 			FROM task_run WHERE (status = $1 AND worker_id IS NULL)
 		`
 
-		var runs []Run
 		rows, err := tx.Query(ctx, q, StatusPending)
 		if err != nil {
 			return nil, err
 		}
 
-		defer rows.Close()
-		for rows.Next() {
-			var run Run
-			err = rows.Scan(
+		return database.ScanAll[Run](ctx, rows, func(run *Run) []any {
+			return []any{
 				&run.ID,
 				&run.WorkflowRunID,
 				&run.TaskName,
@@ -199,15 +196,42 @@ func (pr *PostgresRepository) GetPendingTaskRuns(ctx context.Context) ([]Run, er
 				&run.Input,
 				&run.Output,
 				&run.WorkerID,
-			)
-
-			if err != nil {
-				return nil, err
 			}
+		})
+	})
+}
 
-			runs = append(runs, run)
+func (pr *PostgresRepository) ListForWorkflowRun(ctx context.Context, runID string) ([]Run, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) ([]Run, error) {
+		const q = `
+			SELECT 
+			    id, workflow_run_id, task_name, 
+			    created_at, scheduled_at, 
+			    started_at, completed_at, 
+			    status, input, output,
+			    worker_id
+			FROM task_run WHERE workflow_run_id = $1
+		`
+
+		rows, err := tx.Query(ctx, q, runID)
+		if err != nil {
+			return nil, err
 		}
 
-		return runs, rows.Err()
+		return database.ScanAll[Run](ctx, rows, func(run *Run) []any {
+			return []any{
+				&run.ID,
+				&run.WorkflowRunID,
+				&run.TaskName,
+				&run.CreatedAt,
+				&run.ScheduledAt,
+				&run.StartedAt,
+				&run.CompletedAt,
+				&run.Status,
+				&run.Input,
+				&run.Output,
+				&run.WorkerID,
+			}
+		})
 	})
 }

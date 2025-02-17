@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorkflowService_Schedule_FullMethodName = "/orca.workflow.service.v1.WorkflowService/Schedule"
-	WorkflowService_GetRun_FullMethodName   = "/orca.workflow.service.v1.WorkflowService/GetRun"
+	WorkflowService_Schedule_FullMethodName    = "/orca.workflow.service.v1.WorkflowService/Schedule"
+	WorkflowService_GetRun_FullMethodName      = "/orca.workflow.service.v1.WorkflowService/GetRun"
+	WorkflowService_DescribeRun_FullMethodName = "/orca.workflow.service.v1.WorkflowService/DescribeRun"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -31,6 +32,8 @@ type WorkflowServiceClient interface {
 	Schedule(ctx context.Context, in *ScheduleRequest, opts ...grpc.CallOption) (*ScheduleResponse, error)
 	// Get a workflow run.
 	GetRun(ctx context.Context, in *GetRunRequest, opts ...grpc.CallOption) (*GetRunResponse, error)
+	// Describe a workflow run.
+	DescribeRun(ctx context.Context, in *DescribeRunRequest, opts ...grpc.CallOption) (*DescribeRunResponse, error)
 }
 
 type workflowServiceClient struct {
@@ -61,6 +64,16 @@ func (c *workflowServiceClient) GetRun(ctx context.Context, in *GetRunRequest, o
 	return out, nil
 }
 
+func (c *workflowServiceClient) DescribeRun(ctx context.Context, in *DescribeRunRequest, opts ...grpc.CallOption) (*DescribeRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DescribeRunResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_DescribeRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowServiceServer is the server API for WorkflowService service.
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility.
@@ -69,6 +82,8 @@ type WorkflowServiceServer interface {
 	Schedule(context.Context, *ScheduleRequest) (*ScheduleResponse, error)
 	// Get a workflow run.
 	GetRun(context.Context, *GetRunRequest) (*GetRunResponse, error)
+	// Describe a workflow run.
+	DescribeRun(context.Context, *DescribeRunRequest) (*DescribeRunResponse, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -84,6 +99,9 @@ func (UnimplementedWorkflowServiceServer) Schedule(context.Context, *ScheduleReq
 }
 func (UnimplementedWorkflowServiceServer) GetRun(context.Context, *GetRunRequest) (*GetRunResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRun not implemented")
+}
+func (UnimplementedWorkflowServiceServer) DescribeRun(context.Context, *DescribeRunRequest) (*DescribeRunResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DescribeRun not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 func (UnimplementedWorkflowServiceServer) testEmbeddedByValue()                         {}
@@ -142,6 +160,24 @@ func _WorkflowService_GetRun_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_DescribeRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DescribeRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).DescribeRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_DescribeRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).DescribeRun(ctx, req.(*DescribeRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowService_ServiceDesc is the grpc.ServiceDesc for WorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -156,6 +192,10 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetRun",
 			Handler:    _WorkflowService_GetRun_Handler,
+		},
+		{
+			MethodName: "DescribeRun",
+			Handler:    _WorkflowService_DescribeRun_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

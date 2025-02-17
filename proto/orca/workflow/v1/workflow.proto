@@ -3,6 +3,7 @@ syntax = "proto3";
 package orca.workflow.v1;
 
 import "google/protobuf/timestamp.proto";
+import "orca/task/v1/task.proto";
 
 option go_package = "github.com/davidsbond/orca/internal/proto/orca/workflow/v1;workflowv1";
 
@@ -45,4 +46,23 @@ enum Status {
   STATUS_COMPLETE = 4;
   // The workflow run failed.
   STATUS_FAILED = 5;
+}
+
+// The WorkflowRunDescription type represents full details of a workflow run. Including the child workflows and
+// tasks that it executed.
+message WorkflowRunDescription {
+  // The workflow run data.
+  Run run = 1;
+  // The child workflows and tasks performed during this run. These will be ordered by their creation.
+  repeated WorkflowAction actions = 2;
+}
+
+// The WorkflowAction type describes an action taken by a workflow. This is typically a child workflow or a task.
+message WorkflowAction {
+  oneof action {
+    // A child workflow the parent ran.
+    WorkflowRunDescription workflow_run = 1;
+    // A task the parent ran.
+    orca.task.v1.TaskRunDescription task_run = 2;
+  }
 }

@@ -45,3 +45,9 @@ enum Status {
   // The task run failed.
   STATUS_FAILED = 5;
 }
+
+// The TaskRunDescription type represents full details of a task run.
+message TaskRunDescription {
+  // The task run data.
+  Run run = 1;
+}
