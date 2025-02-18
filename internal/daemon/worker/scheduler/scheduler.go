@@ -35,10 +35,10 @@ type (
 	ControllerClient interface {
 		SetWorkflowRunStatus(ctx context.Context, runID string, status workflow.Status, output json.RawMessage) error
 		SetTaskRunStatus(ctx context.Context, runID string, status task.Status, output json.RawMessage) error
-		ScheduleTask(ctx context.Context, runID string, name string, input json.RawMessage) (string, error)
+		ScheduleTask(ctx context.Context, params task.ScheduleTaskParams) (string, error)
 		GetTaskRun(ctx context.Context, runID string) (task.Run, error)
 		GetWorkflowRun(ctx context.Context, runID string) (workflow.Run, error)
-		ScheduleWorkflow(ctx context.Context, runID string, name string, input json.RawMessage) (string, error)
+		ScheduleWorkflow(ctx context.Context, params workflow.ScheduleWorkflowParams) (string, error)
 	}
 )
 

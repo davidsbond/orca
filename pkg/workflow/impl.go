@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/davidsbond/orca/internal/log"
 	"github.com/davidsbond/orca/internal/task"
@@ -14,6 +15,7 @@ import (
 type (
 	Implementation[Input, Output any] struct {
 		WorkflowName string
+		Options      Options
 		Action       Action[Input, Output]
 		KeyFunc      KeyFunc[Input]
 	}
@@ -21,6 +23,10 @@ type (
 	KeyFunc[T any] func(T) string
 
 	Action[Input any, Output any] func(ctx context.Context, input Input) (Output, error)
+
+	Options struct {
+		Timeout time.Duration
+	}
 )
 
 func (w *Implementation[Input, Output]) Run(ctx context.Context, runID string, input json.RawMessage) (output json.RawMessage, err error) {

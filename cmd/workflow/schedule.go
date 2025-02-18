@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -64,11 +63,8 @@ func schedule() *cobra.Command {
 						return err
 					}
 
-					if run.Status == workflow.StatusComplete {
-						if _, err = os.Stdout.Write(run.Output); err != nil {
-							return err
-						}
-
+					if run.Status == workflow.StatusComplete || run.Status == workflow.StatusSkipped {
+						fmt.Println(string(run.Output))
 						return nil
 					}
 

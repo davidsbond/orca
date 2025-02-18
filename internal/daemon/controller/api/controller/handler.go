@@ -142,6 +142,11 @@ func (h *Handler) SetTaskRunStatus(ctx context.Context, id string, status task.S
 		return err
 	}
 
+	// Don't allow further updates to task runs in one of the final stages.
+	if run.Status == task.StatusSkipped || run.Status == task.StatusComplete || run.Status == task.StatusFailed {
+		return nil
+	}
+
 	run.Status = status
 
 	if len(output) > 0 {
@@ -262,6 +267,11 @@ func (h *Handler) SetWorkflowRunStatus(ctx context.Context, id string, status wo
 		return ErrWorkerNotFound
 	case err != nil:
 		return err
+	}
+
+	// Don't allow further updates to workflow runs in one of the final stages.
+	if run.Status == workflow.StatusSkipped || run.Status == workflow.StatusComplete || run.Status == workflow.StatusFailed {
+		return nil
 	}
 
 	run.Status = status
