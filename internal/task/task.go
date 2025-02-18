@@ -15,8 +15,15 @@ type (
 	Status int
 
 	Client interface {
-		ScheduleTask(ctx context.Context, runID string, name string, params json.RawMessage) (string, error)
+		ScheduleTask(ctx context.Context, params ScheduleTaskParams) (string, error)
 		GetTaskRun(ctx context.Context, runID string) (Run, error)
+	}
+
+	ScheduleTaskParams struct {
+		WorkflowRunID string
+		TaskName      string
+		IdempotentKey string
+		Input         json.RawMessage
 	}
 
 	Run struct {
@@ -53,6 +60,7 @@ const (
 	StatusRunning
 	StatusComplete
 	StatusFailed
+	StatusSkipped
 )
 
 func (s Status) String() string {
@@ -67,6 +75,8 @@ func (s Status) String() string {
 		return "COMPLETE"
 	case StatusFailed:
 		return "FAILED"
+	case StatusSkipped:
+		return "SKIPPED"
 	default:
 		return "UNKNOWN"
 	}

@@ -30,11 +30,13 @@ type (
 	TaskRepository interface {
 		Save(ctx context.Context, run task.Run) error
 		Get(ctx context.Context, id string) (task.Run, error)
+		FindByIdempotentKey(ctx context.Context, name string, key string) (task.Run, error)
 	}
 
 	WorkflowRepository interface {
 		Save(ctx context.Context, run workflow.Run) error
 		Get(ctx context.Context, id string) (workflow.Run, error)
+		FindByIdempotentKey(ctx context.Context, name string, key string) (workflow.Run, error)
 	}
 )
 
@@ -75,20 +77,48 @@ func (h *Handler) DeregisterWorker(ctx context.Context, id string) error {
 	}
 }
 
-func (h *Handler) ScheduleTask(ctx context.Context, id string, name string, input json.RawMessage) (string, error) {
+type (
+	ScheduleTaskParams struct {
+		WorkflowRunID string
+		TaskName      string
+		Input         json.RawMessage
+		IdempotentKey string
+	}
+)
+
+func (h *Handler) ScheduleTask(ctx context.Context, params ScheduleTaskParams) (string, error) {
 	run := task.Run{
 		ID:            uuid.NewString(),
-		WorkflowRunID: id,
-		TaskName:      name,
+		WorkflowRunID: params.WorkflowRunID,
+		TaskName:      params.TaskName,
 		CreatedAt:     time.Now(),
 		Status:        task.StatusPending,
 	}
 
-	if len(input) > 0 {
+	if len(params.Input) > 0 {
 		run.Input.Valid = true
 		run.Input.V = pgtype.JSONB{
-			Bytes:  input,
+			Bytes:  params.Input,
 			Status: pgtype.Present,
+		}
+	}
+
+	if params.IdempotentKey != "" {
+		run.IdempotentKey.Valid = true
+		run.IdempotentKey.V = params.IdempotentKey
+
+		existing, err := h.tasks.FindByIdempotentKey(ctx, params.TaskName, params.IdempotentKey)
+		switch {
+		case errors.Is(err, task.ErrNotFound):
+			break
+		case err != nil:
+			return "", fmt.Errorf("failed to lookup idempotent key: %w", err)
+		default:
+			// If the key has been used before, set the status to skipped and fill out the output.
+			run.Status = task.StatusSkipped
+			run.Output = existing.Output
+			run.CompletedAt.Valid = true
+			run.CompletedAt.V = run.CreatedAt
 		}
 	}
 
@@ -165,25 +195,53 @@ func (h *Handler) GetTaskRun(ctx context.Context, id string) (task.Run, error) {
 	}
 }
 
-func (h *Handler) ScheduleWorkflow(ctx context.Context, parentWorkflowRunID string, name string, input json.RawMessage) (string, error) {
+type (
+	ScheduleWorkflowParams struct {
+		ParentWorkflowRunID string
+		WorkflowName        string
+		Input               json.RawMessage
+		IdempotentKey       string
+	}
+)
+
+func (h *Handler) ScheduleWorkflow(ctx context.Context, params ScheduleWorkflowParams) (string, error) {
 	run := workflow.Run{
 		ID:           uuid.NewString(),
-		WorkflowName: name,
+		WorkflowName: params.WorkflowName,
 		CreatedAt:    time.Now(),
 		Status:       workflow.StatusPending,
 	}
 
-	if len(input) > 0 {
+	if len(params.Input) > 0 {
 		run.Input.Valid = true
 		run.Input.V = pgtype.JSONB{
-			Bytes:  input,
+			Bytes:  params.Input,
 			Status: pgtype.Present,
 		}
 	}
 
-	if parentWorkflowRunID != "" {
-		run.ParentWorkflowRunID.V = parentWorkflowRunID
+	if params.ParentWorkflowRunID != "" {
+		run.ParentWorkflowRunID.V = params.ParentWorkflowRunID
 		run.ParentWorkflowRunID.Valid = true
+	}
+
+	if params.IdempotentKey != "" {
+		run.IdempotentKey.Valid = true
+		run.IdempotentKey.V = params.IdempotentKey
+
+		existing, err := h.workflows.FindByIdempotentKey(ctx, params.WorkflowName, params.IdempotentKey)
+		switch {
+		case errors.Is(err, workflow.ErrNotFound):
+			break
+		case err != nil:
+			return "", fmt.Errorf("failed to lookup idempotent key: %w", err)
+		default:
+			// If the key has been used before, set the status to skipped and fill out the output.
+			run.Status = workflow.StatusSkipped
+			run.Output = existing.Output
+			run.CompletedAt.Valid = true
+			run.CompletedAt.V = run.CreatedAt
+		}
 	}
 
 	err := h.workflows.Save(ctx, run)

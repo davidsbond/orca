@@ -47,6 +47,9 @@ func Task() *task.Implementation[GreetTaskInput, GreetTaskOutput] {
 	return &task.Implementation[GreetTaskInput, GreetTaskOutput]{
 		TaskName: "GreetTask",
 		Action:   greetTask,
+		KeyFunc: func(input GreetTaskInput) string {
+			return input.Name
+		},
 	}
 }
 

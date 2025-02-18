@@ -4,8 +4,9 @@ package mocks
 
 import (
 	context "context"
-
 	json "encoding/json"
+
+	controller "github.com/davidsbond/orca/internal/daemon/controller/api/controller"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -237,9 +238,9 @@ func (_c *Service_RegisterWorker_Call) RunAndReturn(run func(context.Context, wo
 	return _c
 }
 
-// ScheduleTask provides a mock function with given fields: ctx, workflowRunID, name, input
-func (_m *Service) ScheduleTask(ctx context.Context, workflowRunID string, name string, input json.RawMessage) (string, error) {
-	ret := _m.Called(ctx, workflowRunID, name, input)
+// ScheduleTask provides a mock function with given fields: ctx, params
+func (_m *Service) ScheduleTask(ctx context.Context, params controller.ScheduleTaskParams) (string, error) {
+	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ScheduleTask")
@@ -247,17 +248,17 @@ func (_m *Service) ScheduleTask(ctx context.Context, workflowRunID string, name 
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, json.RawMessage) (string, error)); ok {
-		return rf(ctx, workflowRunID, name, input)
+	if rf, ok := ret.Get(0).(func(context.Context, controller.ScheduleTaskParams) (string, error)); ok {
+		return rf(ctx, params)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, json.RawMessage) string); ok {
-		r0 = rf(ctx, workflowRunID, name, input)
+	if rf, ok := ret.Get(0).(func(context.Context, controller.ScheduleTaskParams) string); ok {
+		r0 = rf(ctx, params)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, json.RawMessage) error); ok {
-		r1 = rf(ctx, workflowRunID, name, input)
+	if rf, ok := ret.Get(1).(func(context.Context, controller.ScheduleTaskParams) error); ok {
+		r1 = rf(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -272,16 +273,14 @@ type Service_ScheduleTask_Call struct {
 
 // ScheduleTask is a helper method to define mock.On call
 //   - ctx context.Context
-//   - workflowRunID string
-//   - name string
-//   - input json.RawMessage
-func (_e *Service_Expecter) ScheduleTask(ctx interface{}, workflowRunID interface{}, name interface{}, input interface{}) *Service_ScheduleTask_Call {
-	return &Service_ScheduleTask_Call{Call: _e.mock.On("ScheduleTask", ctx, workflowRunID, name, input)}
+//   - params controller.ScheduleTaskParams
+func (_e *Service_Expecter) ScheduleTask(ctx interface{}, params interface{}) *Service_ScheduleTask_Call {
+	return &Service_ScheduleTask_Call{Call: _e.mock.On("ScheduleTask", ctx, params)}
 }
 
-func (_c *Service_ScheduleTask_Call) Run(run func(ctx context.Context, workflowRunID string, name string, input json.RawMessage)) *Service_ScheduleTask_Call {
+func (_c *Service_ScheduleTask_Call) Run(run func(ctx context.Context, params controller.ScheduleTaskParams)) *Service_ScheduleTask_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(json.RawMessage))
+		run(args[0].(context.Context), args[1].(controller.ScheduleTaskParams))
 	})
 	return _c
 }
@@ -291,14 +290,14 @@ func (_c *Service_ScheduleTask_Call) Return(_a0 string, _a1 error) *Service_Sche
 	return _c
 }
 
-func (_c *Service_ScheduleTask_Call) RunAndReturn(run func(context.Context, string, string, json.RawMessage) (string, error)) *Service_ScheduleTask_Call {
+func (_c *Service_ScheduleTask_Call) RunAndReturn(run func(context.Context, controller.ScheduleTaskParams) (string, error)) *Service_ScheduleTask_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ScheduleWorkflow provides a mock function with given fields: ctx, parentWorkflowRunID, name, input
-func (_m *Service) ScheduleWorkflow(ctx context.Context, parentWorkflowRunID string, name string, input json.RawMessage) (string, error) {
-	ret := _m.Called(ctx, parentWorkflowRunID, name, input)
+// ScheduleWorkflow provides a mock function with given fields: ctx, params
+func (_m *Service) ScheduleWorkflow(ctx context.Context, params controller.ScheduleWorkflowParams) (string, error) {
+	ret := _m.Called(ctx, params)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ScheduleWorkflow")
@@ -306,17 +305,17 @@ func (_m *Service) ScheduleWorkflow(ctx context.Context, parentWorkflowRunID str
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, json.RawMessage) (string, error)); ok {
-		return rf(ctx, parentWorkflowRunID, name, input)
+	if rf, ok := ret.Get(0).(func(context.Context, controller.ScheduleWorkflowParams) (string, error)); ok {
+		return rf(ctx, params)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, json.RawMessage) string); ok {
-		r0 = rf(ctx, parentWorkflowRunID, name, input)
+	if rf, ok := ret.Get(0).(func(context.Context, controller.ScheduleWorkflowParams) string); ok {
+		r0 = rf(ctx, params)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, json.RawMessage) error); ok {
-		r1 = rf(ctx, parentWorkflowRunID, name, input)
+	if rf, ok := ret.Get(1).(func(context.Context, controller.ScheduleWorkflowParams) error); ok {
+		r1 = rf(ctx, params)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -331,16 +330,14 @@ type Service_ScheduleWorkflow_Call struct {
 
 // ScheduleWorkflow is a helper method to define mock.On call
 //   - ctx context.Context
-//   - parentWorkflowRunID string
-//   - name string
-//   - input json.RawMessage
-func (_e *Service_Expecter) ScheduleWorkflow(ctx interface{}, parentWorkflowRunID interface{}, name interface{}, input interface{}) *Service_ScheduleWorkflow_Call {
-	return &Service_ScheduleWorkflow_Call{Call: _e.mock.On("ScheduleWorkflow", ctx, parentWorkflowRunID, name, input)}
+//   - params controller.ScheduleWorkflowParams
+func (_e *Service_Expecter) ScheduleWorkflow(ctx interface{}, params interface{}) *Service_ScheduleWorkflow_Call {
+	return &Service_ScheduleWorkflow_Call{Call: _e.mock.On("ScheduleWorkflow", ctx, params)}
 }
 
-func (_c *Service_ScheduleWorkflow_Call) Run(run func(ctx context.Context, parentWorkflowRunID string, name string, input json.RawMessage)) *Service_ScheduleWorkflow_Call {
+func (_c *Service_ScheduleWorkflow_Call) Run(run func(ctx context.Context, params controller.ScheduleWorkflowParams)) *Service_ScheduleWorkflow_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(json.RawMessage))
+		run(args[0].(context.Context), args[1].(controller.ScheduleWorkflowParams))
 	})
 	return _c
 }
@@ -350,7 +347,7 @@ func (_c *Service_ScheduleWorkflow_Call) Return(_a0 string, _a1 error) *Service_
 	return _c
 }
 
-func (_c *Service_ScheduleWorkflow_Call) RunAndReturn(run func(context.Context, string, string, json.RawMessage) (string, error)) *Service_ScheduleWorkflow_Call {
+func (_c *Service_ScheduleWorkflow_Call) RunAndReturn(run func(context.Context, controller.ScheduleWorkflowParams) (string, error)) *Service_ScheduleWorkflow_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -233,10 +233,11 @@
         "STATUS_SCHEDULED",
         "STATUS_RUNNING",
         "STATUS_COMPLETE",
-        "STATUS_FAILED"
+        "STATUS_FAILED",
+        "STATUS_SKIPPED"
       ],
       "default": "STATUS_UNSPECIFIED",
-      "description": "The Status enumeration represents the status of a task run.\n\n - STATUS_UNSPECIFIED: The task run has an unknown status.\n - STATUS_PENDING: The task run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The task run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The task run is running.\n - STATUS_COMPLETE: The task run completed successfully.\n - STATUS_FAILED: The task run failed."
+      "description": "The Status enumeration represents the status of a task run.\n\n - STATUS_UNSPECIFIED: The task run has an unknown status.\n - STATUS_PENDING: The task run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The task run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The task run is running.\n - STATUS_COMPLETE: The task run completed successfully.\n - STATUS_FAILED: The task run failed.\n - STATUS_SKIPPED: The task run was skipped due to a match on the idempotent key and task\nname with a previous task ran."
     },
     "orcaworkflowv1Run": {
       "type": "object",
@@ -298,10 +299,11 @@
         "STATUS_SCHEDULED",
         "STATUS_RUNNING",
         "STATUS_COMPLETE",
-        "STATUS_FAILED"
+        "STATUS_FAILED",
+        "STATUS_SKIPPED"
       ],
       "default": "STATUS_UNSPECIFIED",
-      "description": "The Status enumeration represents the status of a workflow run.\n\n - STATUS_UNSPECIFIED: The workflow run has an unknown status.\n - STATUS_PENDING: The workflow run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The workflow run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The workflow run is running.\n - STATUS_COMPLETE: The workflow run completed successfully.\n - STATUS_FAILED: The workflow run failed."
+      "description": "The Status enumeration represents the status of a workflow run.\n\n - STATUS_UNSPECIFIED: The workflow run has an unknown status.\n - STATUS_PENDING: The workflow run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The workflow run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The workflow run is running.\n - STATUS_COMPLETE: The workflow run completed successfully.\n - STATUS_FAILED: The workflow run failed.\n - STATUS_SKIPPED: The workflow run was skipped due to a match on the idempotent key and workflow\nname with a previous workflow ran."
     },
     "protobufAny": {
       "type": "object",

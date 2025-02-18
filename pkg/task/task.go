@@ -14,7 +14,7 @@ import (
 func Execute[Input, Output any](ctx context.Context, t *Implementation[Input, Output], input Input) (Output, error) {
 	var output Output
 
-	params, err := json.Marshal(input)
+	inp, err := json.Marshal(input)
 	if err != nil {
 		return output, fmt.Errorf("failed to marshal input: %w", err)
 	}
@@ -29,7 +29,17 @@ func Execute[Input, Output any](ctx context.Context, t *Implementation[Input, Ou
 		return output, errors.New("client not present in context")
 	}
 
-	runID, err := client.ScheduleTask(ctx, run.ID, t.Name(), params)
+	var key string
+	if t.KeyFunc != nil {
+		key = t.KeyFunc(input)
+	}
+
+	runID, err := client.ScheduleTask(ctx, task.ScheduleTaskParams{
+		WorkflowRunID: run.ID,
+		TaskName:      t.TaskName,
+		IdempotentKey: key,
+		Input:         inp,
+	})
 	if err != nil {
 		return output, fmt.Errorf("could not schedule task: %w", err)
 	}
@@ -50,7 +60,7 @@ func Execute[Input, Output any](ctx context.Context, t *Implementation[Input, Ou
 			switch taskRun.Status {
 			case task.StatusRunning, task.StatusPending, task.StatusUnspecified:
 				continue
-			case task.StatusComplete:
+			case task.StatusComplete, task.StatusSkipped:
 				if err = json.Unmarshal(taskRun.Output, &output); err != nil {
 					return output, fmt.Errorf("failed to unmarshal output: %w", err)
 				}

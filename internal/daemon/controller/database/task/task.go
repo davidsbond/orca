@@ -28,6 +28,7 @@ type (
 		Input         sql.Null[pgtype.JSONB]
 		Output        sql.Null[pgtype.JSONB]
 		WorkerID      sql.Null[string]
+		IdempotentKey sql.Null[string]
 	}
 
 	Status int
@@ -44,6 +45,7 @@ const (
 	StatusRunning
 	StatusComplete
 	StatusFailed
+	StatusSkipped
 )
 
 var (
@@ -91,9 +93,9 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 			  id, workflow_run_id, task_name, 
 			  created_at, scheduled_at, started_at,
 			  completed_at, status, input, output,
-			  worker_id
+			  worker_id, idempotent_key
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 			ON CONFLICT (id) DO UPDATE SET
 				scheduled_at = EXCLUDED.scheduled_at,
 				started_at = EXCLUDED.started_at,
@@ -116,6 +118,7 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 			run.Input,
 			run.Output,
 			run.WorkerID,
+			run.IdempotentKey,
 		)
 		switch {
 		case database.IsForeignKeyViolation(err, "workflow_run_id"):
@@ -137,7 +140,7 @@ func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 			    id, workflow_run_id, task_name, 
 			    created_at, scheduled_at, started_at, 
 			    completed_at, status, input, output, 
-			    worker_id
+			    worker_id, idempotent_key
 			FROM task_run WHERE id = $1
 		`
 
@@ -154,6 +157,7 @@ func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 			&run.Input,
 			&run.Output,
 			&run.WorkerID,
+			&run.IdempotentKey,
 		)
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -174,7 +178,7 @@ func (pr *PostgresRepository) GetPendingTaskRuns(ctx context.Context) ([]Run, er
 			    created_at, scheduled_at, 
 			    started_at, completed_at, 
 			    status, input, output,
-			    worker_id
+			    worker_id, idempotent_key
 			FROM task_run WHERE (status = $1 AND worker_id IS NULL)
 		`
 
@@ -196,6 +200,7 @@ func (pr *PostgresRepository) GetPendingTaskRuns(ctx context.Context) ([]Run, er
 				&run.Input,
 				&run.Output,
 				&run.WorkerID,
+				&run.IdempotentKey,
 			}
 		})
 	})
@@ -209,7 +214,7 @@ func (pr *PostgresRepository) ListForWorkflowRun(ctx context.Context, runID stri
 			    created_at, scheduled_at, 
 			    started_at, completed_at, 
 			    status, input, output,
-			    worker_id
+			    worker_id, idempotent_key
 			FROM task_run WHERE workflow_run_id = $1
 		`
 
@@ -231,7 +236,47 @@ func (pr *PostgresRepository) ListForWorkflowRun(ctx context.Context, runID stri
 				&run.Input,
 				&run.Output,
 				&run.WorkerID,
+				&run.IdempotentKey,
 			}
 		})
+	})
+}
+
+func (pr *PostgresRepository) FindByIdempotentKey(ctx context.Context, name string, key string) (Run, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) (Run, error) {
+		const q = `
+			SELECT 
+			    id, workflow_run_id, task_name, 
+			    created_at, scheduled_at, started_at, 
+			    completed_at, status, input, output, 
+			    worker_id, idempotent_key
+			FROM task_run 
+			WHERE task_name = $1 AND idempotent_key = $2 AND status = $3
+			LIMIT 1
+		`
+
+		var run Run
+		err := tx.QueryRow(ctx, q, name, key, StatusComplete).Scan(
+			&run.ID,
+			&run.WorkflowRunID,
+			&run.TaskName,
+			&run.CreatedAt,
+			&run.ScheduledAt,
+			&run.StartedAt,
+			&run.CompletedAt,
+			&run.Status,
+			&run.Input,
+			&run.Output,
+			&run.WorkerID,
+			&run.IdempotentKey,
+		)
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return run, ErrNotFound
+		case err != nil:
+			return run, err
+		default:
+			return run, nil
+		}
 	})
 }

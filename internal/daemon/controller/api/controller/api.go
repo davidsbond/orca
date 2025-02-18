@@ -26,10 +26,10 @@ type (
 	Service interface {
 		RegisterWorker(ctx context.Context, w worker.Worker) error
 		DeregisterWorker(ctx context.Context, id string) error
-		ScheduleTask(ctx context.Context, workflowRunID string, name string, input json.RawMessage) (string, error)
+		ScheduleTask(ctx context.Context, params ScheduleTaskParams) (string, error)
 		SetTaskRunStatus(ctx context.Context, id string, status task.Status, output json.RawMessage) error
 		GetTaskRun(ctx context.Context, id string) (task.Run, error)
-		ScheduleWorkflow(ctx context.Context, parentWorkflowRunID string, name string, input json.RawMessage) (string, error)
+		ScheduleWorkflow(ctx context.Context, params ScheduleWorkflowParams) (string, error)
 		SetWorkflowRunStatus(ctx context.Context, id string, status workflow.Status, output json.RawMessage) error
 		GetWorkflowRun(ctx context.Context, id string) (workflow.Run, error)
 	}
@@ -79,7 +79,12 @@ func (api *API) DeregisterWorker(ctx context.Context, request *controllersvcv1.D
 }
 
 func (api *API) ScheduleTask(ctx context.Context, request *controllersvcv1.ScheduleTaskRequest) (*controllersvcv1.ScheduleTaskResponse, error) {
-	runID, err := api.service.ScheduleTask(ctx, request.GetWorkflowRunId(), request.GetTaskName(), request.GetInput())
+	runID, err := api.service.ScheduleTask(ctx, ScheduleTaskParams{
+		WorkflowRunID: request.GetWorkflowRunId(),
+		TaskName:      request.GetTaskName(),
+		Input:         request.GetInput(),
+		IdempotentKey: request.GetIdempotentKey(),
+	})
 	switch {
 	case errors.Is(err, ErrWorkflowRunNotFound):
 		return nil, status.Errorf(codes.NotFound, "workflow run %s does not exist", request.GetWorkflowRunId())
@@ -117,7 +122,12 @@ func (api *API) GetTaskRun(ctx context.Context, request *controllersvcv1.GetTask
 }
 
 func (api *API) ScheduleWorkflow(ctx context.Context, request *controllersvcv1.ScheduleWorkflowRequest) (*controllersvcv1.ScheduleWorkflowResponse, error) {
-	runID, err := api.service.ScheduleWorkflow(ctx, request.GetParentWorkflowRunId(), request.GetWorkflowName(), request.GetInput())
+	runID, err := api.service.ScheduleWorkflow(ctx, ScheduleWorkflowParams{
+		ParentWorkflowRunID: request.GetParentWorkflowRunId(),
+		WorkflowName:        request.GetWorkflowName(),
+		Input:               request.GetInput(),
+		IdempotentKey:       request.GetIdempotentKey(),
+	})
 	switch {
 	case errors.Is(err, ErrParentWorkflowNotFound):
 		return nil, status.Errorf(codes.NotFound, "parent workflow run %s does not exist", request.GetParentWorkflowRunId())

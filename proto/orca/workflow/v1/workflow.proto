@@ -46,6 +46,9 @@ enum Status {
   STATUS_COMPLETE = 4;
   // The workflow run failed.
   STATUS_FAILED = 5;
+  // The workflow run was skipped due to a match on the idempotent key and workflow
+  // name with a previous workflow ran.
+  STATUS_SKIPPED = 6;
 }
 
 // The WorkflowRunDescription type represents full details of a workflow run. Including the child workflows and

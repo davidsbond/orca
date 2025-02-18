@@ -13,7 +13,10 @@ type (
 	Implementation[Input, Output any] struct {
 		TaskName string
 		Action   Action[Input, Output]
+		KeyFunc  KeyFunc[Input]
 	}
+
+	KeyFunc[T any] func(T) string
 
 	Action[Input any, Output any] func(ctx context.Context, input Input) (Output, error)
 )

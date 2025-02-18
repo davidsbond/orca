@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/davidsbond/orca/internal/daemon"
-
 	"google.golang.org/grpc"
 
+	"github.com/davidsbond/orca/internal/daemon"
 	controllersvcv1 "github.com/davidsbond/orca/internal/proto/orca/private/controller/service/v1"
 	workerv1 "github.com/davidsbond/orca/internal/proto/orca/private/worker/v1"
 	taskv1 "github.com/davidsbond/orca/internal/proto/orca/task/v1"
@@ -75,11 +74,12 @@ func (c *Client) SetTaskRunStatus(ctx context.Context, runID string, status task
 	return nil
 }
 
-func (c *Client) ScheduleTask(ctx context.Context, runID string, name string, input json.RawMessage) (string, error) {
+func (c *Client) ScheduleTask(ctx context.Context, params task.ScheduleTaskParams) (string, error) {
 	request := &controllersvcv1.ScheduleTaskRequest{
-		WorkflowRunId: runID,
-		TaskName:      name,
-		Input:         input,
+		WorkflowRunId: params.WorkflowRunID,
+		TaskName:      params.TaskName,
+		Input:         params.Input,
+		IdempotentKey: params.IdempotentKey,
 	}
 
 	response, err := c.controller.ScheduleTask(ctx, request)
@@ -169,11 +169,12 @@ func (c *Client) DeregisterWorker(ctx context.Context, id string) error {
 	return nil
 }
 
-func (c *Client) ScheduleWorkflow(ctx context.Context, runID string, name string, input json.RawMessage) (string, error) {
+func (c *Client) ScheduleWorkflow(ctx context.Context, params workflow.ScheduleWorkflowParams) (string, error) {
 	request := &controllersvcv1.ScheduleWorkflowRequest{
-		ParentWorkflowRunId: runID,
-		WorkflowName:        name,
-		Input:               input,
+		ParentWorkflowRunId: params.WorkflowRunID,
+		WorkflowName:        params.WorkflowName,
+		Input:               params.Input,
+		IdempotentKey:       params.IdempotentKey,
 	}
 
 	response, err := c.controller.ScheduleWorkflow(ctx, request)

@@ -60,6 +60,9 @@ message ScheduleTaskRequest {
   string task_name = 2;
   // Encoded input to pass to the task.
   bytes input = 3;
+  // The key used to prevent rerunning this task if not required. If a a task of the same name and idempotent key
+  // is found, this run will use the output of that previously run task.
+  string idempotent_key = 4;
 }
 
 message ScheduleTaskResponse {
@@ -108,6 +111,9 @@ message ScheduleWorkflowRequest {
   string workflow_name = 2;
   // Encoded input to pass to the task.
   bytes input = 3;
+  // The key used to prevent rerunning this workflow if not required. If a a workflow of the same name and idempotent key
+  // is found, this run will use the output of that previously run workflow.
+  string idempotent_key = 4;
 }
 
 message ScheduleWorkflowResponse {

@@ -28,8 +28,15 @@ type (
 	}
 
 	Client interface {
-		ScheduleWorkflow(ctx context.Context, runID string, name string, params json.RawMessage) (string, error)
+		ScheduleWorkflow(ctx context.Context, params ScheduleWorkflowParams) (string, error)
 		GetWorkflowRun(ctx context.Context, runID string) (Run, error)
+	}
+
+	ScheduleWorkflowParams struct {
+		WorkflowRunID string
+		WorkflowName  string
+		IdempotentKey string
+		Input         json.RawMessage
 	}
 
 	runCtxKey    struct{}
@@ -56,6 +63,7 @@ const (
 	StatusRunning
 	StatusComplete
 	StatusFailed
+	StatusSkipped
 )
 
 func (s Status) String() string {
@@ -70,6 +78,8 @@ func (s Status) String() string {
 		return "COMPLETE"
 	case StatusFailed:
 		return "FAILED"
+	case StatusSkipped:
+		return "SKIPPED"
 	default:
 		return "UNKNOWN"
 	}
