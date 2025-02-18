@@ -47,6 +47,8 @@ enum Status {
   // The task run was skipped due to a match on the idempotent key and task
   // name with a previous task ran.
   STATUS_SKIPPED = 6;
+  // The task run was cancelled as its duration took longer than its deadline.
+  STATUS_TIMEOUT = 7;
 }
 
 // The TaskRunDescription type represents full details of a task run.

@@ -59,7 +59,7 @@ func (s *Runner) Run(ctx context.Context) error {
 }
 
 func (s *Runner) runWorkflows(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second / 10)
 	defer ticker.Stop()
 
 	for {
@@ -82,7 +82,7 @@ func (s *Runner) runWorkflows(ctx context.Context) error {
 }
 
 func (s *Runner) runTasks(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second / 10)
 	defer ticker.Stop()
 
 	for {

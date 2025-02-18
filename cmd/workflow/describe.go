@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/davidsbond/orca/pkg/client"
+	"github.com/davidsbond/orca/pkg/orca"
 )
 
 func describe() *cobra.Command {
@@ -25,7 +25,7 @@ func describe() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			cl, ok := client.FromContext(ctx)
+			cl, ok := orca.FromContext(ctx)
 			if !ok {
 				return errors.New("no client available")
 			}

@@ -1,4 +1,4 @@
-package client
+package orca
 
 import (
 	"context"
@@ -51,11 +51,11 @@ func (c *Client) GetWorkflowRun(ctx context.Context, id string) (workflow.Run, e
 
 type (
 	Description struct {
-		Run     workflow.Run `json:"run"`
-		Actions []Action     `json:"actions,omitempty"`
+		Run     workflow.Run     `json:"run"`
+		Actions []WorkflowAction `json:"actions,omitempty"`
 	}
 
-	Action struct {
+	WorkflowAction struct {
 		WorkflowRun *Description `json:"workflowRun,omitempty"`
 		TaskRun     *task.Run    `json:"taskRun,omitempty"`
 	}
@@ -96,11 +96,11 @@ func workflowRunFromProto(run *workflowv1.Run) workflow.Run {
 	}
 }
 
-func workflowActionsFromProto(actions []*workflowv1.WorkflowAction) []Action {
-	out := make([]Action, len(actions))
+func workflowActionsFromProto(actions []*workflowv1.WorkflowAction) []WorkflowAction {
+	out := make([]WorkflowAction, len(actions))
 	for i, action := range actions {
 		if wf := action.GetWorkflowRun(); wf != nil {
-			out[i] = Action{
+			out[i] = WorkflowAction{
 				WorkflowRun: &Description{
 					Run:     workflowRunFromProto(wf.GetRun()),
 					Actions: workflowActionsFromProto(wf.GetActions()),
@@ -111,7 +111,7 @@ func workflowActionsFromProto(actions []*workflowv1.WorkflowAction) []Action {
 		}
 
 		if tsk := action.GetTaskRun(); tsk != nil {
-			out[i] = Action{
+			out[i] = WorkflowAction{
 				TaskRun: taskRunFromProto(tsk.GetRun()),
 			}
 
@@ -154,7 +154,7 @@ func (d Description) tree() gotree.Tree {
 		if action.TaskRun != nil {
 			tsk := fmt.Sprintf("Task: %s (%s) [%s]",
 				action.TaskRun.TaskName,
-				action.TaskRun.CompletedAt.Sub(d.Run.CreatedAt).Truncate(time.Millisecond),
+				action.TaskRun.CompletedAt.Sub(action.TaskRun.CreatedAt).Truncate(time.Millisecond),
 				action.TaskRun.Status,
 			)
 

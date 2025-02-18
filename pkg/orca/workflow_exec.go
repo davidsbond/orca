@@ -1,4 +1,4 @@
-package workflow
+package orca
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/davidsbond/orca/internal/workflow"
 )
 
-func Execute[Input, Output any](ctx context.Context, w *Implementation[Input, Output], input Input) (Output, error) {
+func ExecuteWorkflow[Input, Output any](ctx context.Context, w *Workflow[Input, Output], input Input) (Output, error) {
 	var output Output
 
 	inp, err := json.Marshal(input)
@@ -43,7 +43,7 @@ func Execute[Input, Output any](ctx context.Context, w *Implementation[Input, Ou
 		return output, fmt.Errorf("could not schedule workflow: %w", err)
 	}
 
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second / 10)
 	defer ticker.Stop()
 
 	for {
@@ -56,24 +56,29 @@ func Execute[Input, Output any](ctx context.Context, w *Implementation[Input, Ou
 				return output, err
 			}
 
-			switch workflowRun.Status {
-			case workflow.StatusRunning, workflow.StatusPending, workflow.StatusUnspecified:
-				continue
-			case workflow.StatusComplete, workflow.StatusSkipped:
+			if workflowRun.Status == workflow.StatusTimeout {
+				return output, workflow.Error{
+					Message:      "workflow timed out",
+					WorkflowName: workflowRun.WorkflowName,
+					RunID:        runID,
+				}
+			}
+
+			if workflowRun.Status == workflow.StatusComplete || workflowRun.Status == workflow.StatusSkipped {
 				if err = json.Unmarshal(workflowRun.Output, &output); err != nil {
 					return output, fmt.Errorf("failed to unmarshal output: %w", err)
 				}
 
 				return output, nil
-			case workflow.StatusFailed:
+			}
+
+			if workflowRun.Status == workflow.StatusFailed {
 				var e workflow.Error
 				if err = json.Unmarshal(workflowRun.Output, &e); err != nil {
 					return output, fmt.Errorf("failed to unmarshal output: %w", err)
 				}
 
 				return output, e
-			default:
-				continue
 			}
 		}
 	}

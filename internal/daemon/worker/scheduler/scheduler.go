@@ -146,6 +146,16 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 
 	logger.InfoContext(ctx, "running workflow")
 	output, err := sw.workflow.Run(ctx, sw.runID, sw.input)
+
+	if errors.Is(err, workflow.ErrTimeout) {
+		logger.ErrorContext(ctx, "workflow timed out")
+		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusTimeout, nil); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	if err != nil {
 		var e workflow.Error
 		if !errors.As(err, &e) {
@@ -189,6 +199,16 @@ func (s *Scheduler) runTask(ctx context.Context, st *scheduledTask) error {
 
 	logger.InfoContext(ctx, "running task")
 	output, err := st.task.Run(ctx, st.runID, st.input)
+
+	if errors.Is(err, task.ErrTimeout) {
+		logger.ErrorContext(ctx, "task timed out")
+		if err = s.controller.SetTaskRunStatus(ctx, st.runID, task.StatusTimeout, nil); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	if err != nil {
 		var e task.Error
 		if !errors.As(err, &e) {

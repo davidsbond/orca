@@ -143,7 +143,10 @@ func (h *Handler) SetTaskRunStatus(ctx context.Context, id string, status task.S
 	}
 
 	// Don't allow further updates to task runs in one of the final stages.
-	if run.Status == task.StatusSkipped || run.Status == task.StatusComplete || run.Status == task.StatusFailed {
+	if run.Status == task.StatusSkipped ||
+		run.Status == task.StatusComplete ||
+		run.Status == task.StatusFailed ||
+		run.Status == task.StatusTimeout {
 		return nil
 	}
 
@@ -270,7 +273,10 @@ func (h *Handler) SetWorkflowRunStatus(ctx context.Context, id string, status wo
 	}
 
 	// Don't allow further updates to workflow runs in one of the final stages.
-	if run.Status == workflow.StatusSkipped || run.Status == workflow.StatusComplete || run.Status == workflow.StatusFailed {
+	if run.Status == workflow.StatusSkipped ||
+		run.Status == workflow.StatusComplete ||
+		run.Status == workflow.StatusFailed ||
+		run.Status == workflow.StatusTimeout {
 		return nil
 	}
 

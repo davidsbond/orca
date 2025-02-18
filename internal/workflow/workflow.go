@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 )
 
@@ -56,6 +57,10 @@ func (e Error) Error() string {
 	return e.Message
 }
 
+var (
+	ErrTimeout = errors.New("workflow timeout")
+)
+
 const (
 	StatusUnspecified Status = iota
 	StatusPending
@@ -64,6 +69,7 @@ const (
 	StatusComplete
 	StatusFailed
 	StatusSkipped
+	StatusTimeout
 )
 
 func (s Status) String() string {

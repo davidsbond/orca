@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/davidsbond/orca/internal/workflow"
-	"github.com/davidsbond/orca/pkg/client"
+	"github.com/davidsbond/orca/pkg/orca"
 )
 
 func schedule() *cobra.Command {
@@ -27,7 +27,7 @@ func schedule() *cobra.Command {
 		Args:    cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			cl, ok := client.FromContext(ctx)
+			cl, ok := orca.FromContext(ctx)
 			if !ok {
 				return errors.New("no client available")
 			}
@@ -47,7 +47,7 @@ func schedule() *cobra.Command {
 				return nil
 			}
 
-			ticker := time.NewTicker(time.Second)
+			ticker := time.NewTicker(time.Second / 10)
 			defer ticker.Stop()
 
 			for {
@@ -57,7 +57,7 @@ func schedule() *cobra.Command {
 				case <-ticker.C:
 					run, err := cl.GetWorkflowRun(ctx, runID)
 					switch {
-					case errors.Is(err, client.ErrNotFound):
+					case errors.Is(err, orca.ErrNotFound):
 						return fmt.Errorf("workflow run %s does not exist", runID)
 					case err != nil:
 						return err

@@ -46,6 +46,7 @@ const (
 	StatusComplete
 	StatusFailed
 	StatusSkipped
+	StatusTimeout
 )
 
 var (

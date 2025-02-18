@@ -52,6 +52,7 @@ const (
 	StatusComplete
 	StatusFailed
 	StatusSkipped
+	StatusTimeout
 )
 
 func (r Run) ToProto() *workflowv1.Run {

@@ -49,6 +49,8 @@ enum Status {
   // The workflow run was skipped due to a match on the idempotent key and workflow
   // name with a previous workflow ran.
   STATUS_SKIPPED = 6;
+  // The workflow run was cancelled as its duration took longer than its deadline.
+  STATUS_TIMEOUT = 7;
 }
 
 // The WorkflowRunDescription type represents full details of a workflow run. Including the child workflows and

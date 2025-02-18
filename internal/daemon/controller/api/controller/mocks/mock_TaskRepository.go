@@ -23,6 +23,64 @@ func (_m *TaskRepository) EXPECT() *TaskRepository_Expecter {
 	return &TaskRepository_Expecter{mock: &_m.Mock}
 }
 
+// FindByIdempotentKey provides a mock function with given fields: ctx, name, key
+func (_m *TaskRepository) FindByIdempotentKey(ctx context.Context, name string, key string) (task.Run, error) {
+	ret := _m.Called(ctx, name, key)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindByIdempotentKey")
+	}
+
+	var r0 task.Run
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (task.Run, error)); ok {
+		return rf(ctx, name, key)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) task.Run); ok {
+		r0 = rf(ctx, name, key)
+	} else {
+		r0 = ret.Get(0).(task.Run)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, key)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TaskRepository_FindByIdempotentKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindByIdempotentKey'
+type TaskRepository_FindByIdempotentKey_Call struct {
+	*mock.Call
+}
+
+// FindByIdempotentKey is a helper method to define mock.On call
+//   - ctx context.Context
+//   - name string
+//   - key string
+func (_e *TaskRepository_Expecter) FindByIdempotentKey(ctx interface{}, name interface{}, key interface{}) *TaskRepository_FindByIdempotentKey_Call {
+	return &TaskRepository_FindByIdempotentKey_Call{Call: _e.mock.On("FindByIdempotentKey", ctx, name, key)}
+}
+
+func (_c *TaskRepository_FindByIdempotentKey_Call) Run(run func(ctx context.Context, name string, key string)) *TaskRepository_FindByIdempotentKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *TaskRepository_FindByIdempotentKey_Call) Return(_a0 task.Run, _a1 error) *TaskRepository_FindByIdempotentKey_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TaskRepository_FindByIdempotentKey_Call) RunAndReturn(run func(context.Context, string, string) (task.Run, error)) *TaskRepository_FindByIdempotentKey_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function with given fields: ctx, id
 func (_m *TaskRepository) Get(ctx context.Context, id string) (task.Run, error) {
 	ret := _m.Called(ctx, id)

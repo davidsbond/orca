@@ -3,7 +3,7 @@ package workflow
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/davidsbond/orca/pkg/client"
+	"github.com/davidsbond/orca/pkg/orca"
 )
 
 func Command() *cobra.Command {
@@ -16,12 +16,12 @@ func Command() *cobra.Command {
 		Short:   "Workflow management commands",
 		Aliases: []string{"workflows", "wf"},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			cl, err := client.Dial(addr)
+			cl, err := orca.Dial(addr)
 			if err != nil {
 				return err
 			}
 
-			cmd.SetContext(client.ToContext(cmd.Context(), cl))
+			cmd.SetContext(orca.ToContext(cmd.Context(), cl))
 			return nil
 		},
 	}

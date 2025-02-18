@@ -2,10 +2,13 @@ package orca
 
 import (
 	"context"
+	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/davidsbond/orca/internal/daemon/worker"
+	"github.com/davidsbond/orca/internal/log"
 	"github.com/davidsbond/orca/internal/task"
 	"github.com/davidsbond/orca/internal/workflow"
 )
@@ -18,6 +21,7 @@ type (
 		port              int
 		workflows         []workflow.Workflow
 		tasks             []task.Task
+		logger            *slog.Logger
 	}
 
 	Option func(opts *options)
@@ -29,11 +33,14 @@ func Run(ctx context.Context, opts ...Option) error {
 		controllerAddress: "localhost:4001",
 		advertiseAddress:  "localhost:4002",
 		port:              4002,
+		logger:            slog.Default(),
 	}
 
 	for _, opt := range opts {
 		opt(o)
 	}
+
+	ctx = log.ToContext(ctx, o.logger)
 
 	return worker.Run(ctx, worker.Config{
 		ID:                o.id,
@@ -80,3 +87,20 @@ func WithTasks(tasks ...task.Task) Option {
 		o.tasks = append(o.tasks, tasks...)
 	}
 }
+
+func WithLogger(logger *slog.Logger) Option {
+	return func(o *options) {
+		o.logger = logger
+	}
+}
+
+type (
+	KeyFunc[T any] func(T) string
+
+	Action[Input any, Output any] func(ctx context.Context, input Input) (Output, error)
+
+	ActionOptions struct {
+		RetryCount int
+		Timeout    time.Duration
+	}
+)
