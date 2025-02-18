@@ -1,0 +1,7 @@
+BEGIN;
+
+DROP TRIGGER IF EXISTS refresh_task_view ON worker;
+DROP FUNCTION IF EXISTS refresh_task_view;
+DROP MATERIALIZED VIEW IF EXISTS task;
+
+COMMIT;

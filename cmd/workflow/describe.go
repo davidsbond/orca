@@ -21,7 +21,8 @@ func describe() *cobra.Command {
 		Short: "Describe a workflow run",
 		Long: "Outputs a tree describing a workflow run. This includes child workflows and tasks, recursing all the way\n" +
 			"to the end of the root workflow.",
-		Args: cobra.ExactArgs(1),
+		Example: "orca workflow describe 74cd0814-13eb-4e98-b814-ddf684fc2496",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			cl, ok := client.FromContext(ctx)

@@ -24,7 +24,8 @@ func schedule() *cobra.Command {
 			"The workflow input is optional but must be JSON data when provided.\n\n" +
 			"You can use the --wait flag to force the CLI to wait until the workflow run is complete and print its output.\n" +
 			"(erroneous or otherwise)",
-		Args: cobra.RangeArgs(1, 2),
+		Example: `orca workflow schedule ReticulateSplines '{ "Foo": "Bar" }'`,
+		Args:    cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			cl, ok := client.FromContext(ctx)
