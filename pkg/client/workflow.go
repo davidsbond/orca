@@ -3,11 +3,18 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/disiqueira/gotree"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	taskv1 "github.com/davidsbond/orca/internal/proto/orca/task/v1"
 	workflowsvcv1 "github.com/davidsbond/orca/internal/proto/orca/workflow/service/v1"
+	workflowv1 "github.com/davidsbond/orca/internal/proto/orca/workflow/v1"
+	"github.com/davidsbond/orca/internal/task"
 	"github.com/davidsbond/orca/internal/workflow"
 )
 
@@ -40,6 +47,42 @@ func (c *Client) GetWorkflowRun(ctx context.Context, id string) (workflow.Run, e
 
 	run := response.GetWorkflowRun()
 
+	return workflowRunFromProto(run), nil
+}
+
+type (
+	Description struct {
+		Run     workflow.Run `json:"run"`
+		Actions []Action     `json:"actions,omitempty"`
+	}
+
+	Action struct {
+		WorkflowRun *Description `json:"workflowRun,omitempty"`
+		TaskRun     *task.Run    `json:"taskRun,omitempty"`
+	}
+)
+
+func (c *Client) DescribeWorkflowRun(ctx context.Context, runID string) (Description, error) {
+	request := &workflowsvcv1.DescribeRunRequest{
+		WorkflowRunId: runID,
+	}
+
+	response, err := c.workflows.DescribeRun(ctx, request)
+	if err != nil {
+		return Description{}, formatError(err)
+	}
+
+	description := response.GetDescription()
+
+	result := Description{
+		Run:     workflowRunFromProto(description.GetRun()),
+		Actions: workflowActionsFromProto(description.GetActions()),
+	}
+
+	return result, nil
+}
+
+func workflowRunFromProto(run *workflowv1.Run) workflow.Run {
 	return workflow.Run{
 		ID:           run.GetRunId(),
 		ParentID:     run.GetParentWorkflowRunId(),
@@ -51,5 +94,79 @@ func (c *Client) GetWorkflowRun(ctx context.Context, id string) (workflow.Run, e
 		Status:       workflow.Status(run.GetStatus()),
 		Input:        run.GetInput(),
 		Output:       run.GetOutput(),
-	}, nil
+	}
+}
+
+func workflowActionsFromProto(actions []*workflowv1.WorkflowAction) []Action {
+	out := make([]Action, len(actions))
+	for i, action := range actions {
+		if wf := action.GetWorkflowRun(); wf != nil {
+			out[i] = Action{
+				WorkflowRun: &Description{
+					Run:     workflowRunFromProto(wf.GetRun()),
+					Actions: workflowActionsFromProto(wf.GetActions()),
+				},
+			}
+
+			continue
+		}
+
+		if tsk := action.GetTaskRun(); tsk != nil {
+			out[i] = Action{
+				TaskRun: taskRunFromProto(tsk.GetRun()),
+			}
+
+			continue
+		}
+	}
+
+	return out
+}
+
+func taskRunFromProto(run *taskv1.Run) *task.Run {
+	return &task.Run{
+		ID:            run.GetRunId(),
+		WorkflowRunID: run.GetWorkflowRunId(),
+		TaskName:      run.GetTaskName(),
+		CreatedAt:     run.GetCreatedAt().AsTime(),
+		ScheduledAt:   run.GetScheduledAt().AsTime(),
+		StartedAt:     run.GetStartedAt().AsTime(),
+		CompletedAt:   run.GetCompletedAt().AsTime(),
+		Status:        task.Status(run.GetStatus()),
+		Input:         run.GetInput(),
+		Output:        run.GetOutput(),
+	}
+}
+
+func (d Description) String() string {
+	return d.tree().Print()
+}
+
+func (d Description) tree() gotree.Tree {
+	wf := fmt.Sprintf("Workflow: %s (%s) [%s]",
+		d.Run.WorkflowName,
+		d.Run.CompletedAt.Sub(d.Run.CreatedAt).Truncate(time.Millisecond),
+		d.Run.Status,
+	)
+
+	root := gotree.New(wf)
+
+	for _, action := range d.Actions {
+		if action.TaskRun != nil {
+			tsk := fmt.Sprintf("Task: %s (%s) [%s]",
+				action.TaskRun.TaskName,
+				action.TaskRun.CompletedAt.Sub(d.Run.CreatedAt).Truncate(time.Millisecond),
+				action.TaskRun.Status,
+			)
+
+			root.Add(tsk)
+			continue
+		}
+
+		if action.WorkflowRun != nil {
+			root.AddTree(action.WorkflowRun.tree())
+		}
+	}
+
+	return root
 }

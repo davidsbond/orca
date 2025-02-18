@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"errors"
 
 	"google.golang.org/grpc"
@@ -48,4 +49,17 @@ func formatError(err error) error {
 	}
 
 	return errors.New(st.Message())
+}
+
+type (
+	ctxKey struct{}
+)
+
+func ToContext(ctx context.Context, client *Client) context.Context {
+	return context.WithValue(ctx, ctxKey{}, client)
+}
+
+func FromContext(ctx context.Context) (*Client, bool) {
+	client, ok := ctx.Value(ctxKey{}).(*Client)
+	return client, ok
 }

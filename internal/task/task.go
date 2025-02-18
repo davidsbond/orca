@@ -20,16 +20,16 @@ type (
 	}
 
 	Run struct {
-		ID            string
-		WorkflowRunID string
-		TaskName      string
-		CreatedAt     time.Time
-		ScheduledAt   time.Time
-		StartedAt     time.Time
-		CompletedAt   time.Time
-		Status        Status
-		Input         json.RawMessage
-		Output        json.RawMessage
+		ID            string          `json:"id"`
+		WorkflowRunID string          `json:"workflowRunId"`
+		TaskName      string          `json:"taskName"`
+		CreatedAt     time.Time       `json:"createdAt"`
+		ScheduledAt   time.Time       `json:"scheduledAt"`
+		StartedAt     time.Time       `json:"startedAt"`
+		CompletedAt   time.Time       `json:"completedAt"`
+		Status        Status          `json:"status"`
+		Input         json.RawMessage `json:"input"`
+		Output        json.RawMessage `json:"output"`
 	}
 
 	ctxKey struct{}
@@ -54,6 +54,23 @@ const (
 	StatusComplete
 	StatusFailed
 )
+
+func (s Status) String() string {
+	switch s {
+	case StatusPending:
+		return "PENDING"
+	case StatusScheduled:
+		return "SCHEDULED"
+	case StatusRunning:
+		return "RUNNING"
+	case StatusComplete:
+		return "COMPLETE"
+	case StatusFailed:
+		return "FAILED"
+	default:
+		return "UNKNOWN"
+	}
+}
 
 func ClientFromContext(ctx context.Context) (Client, bool) {
 	client, ok := ctx.Value(ctxKey{}).(Client)

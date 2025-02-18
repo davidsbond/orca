@@ -14,10 +14,7 @@ import (
 )
 
 func schedule() *cobra.Command {
-	var (
-		wait bool
-		addr string
-	)
+	var wait bool
 
 	cmd := &cobra.Command{
 		Use:   "schedule name [input]",
@@ -30,9 +27,9 @@ func schedule() *cobra.Command {
 		Args: cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
-			cl, err := client.Dial(addr)
-			if err != nil {
-				return err
+			cl, ok := client.FromContext(ctx)
+			if !ok {
+				return errors.New("no client available")
 			}
 
 			var input json.RawMessage
@@ -84,7 +81,6 @@ func schedule() *cobra.Command {
 
 	flags := cmd.PersistentFlags()
 	flags.BoolVarP(&wait, "wait", "w", false, "Wait until the workflow run is complete and print its output")
-	flags.StringVar(&addr, "addr", "localhost:8081", "Address of the orca controller")
 
 	return cmd
 }
