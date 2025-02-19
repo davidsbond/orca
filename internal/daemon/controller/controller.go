@@ -38,7 +38,7 @@ func Run(ctx context.Context, config Config) error {
 	controllerHandler := controller.NewHandler(workers, tasks, workflows)
 	controllerAPI := controller.NewAPI(controllerHandler)
 
-	workflowHandler := workflow_api.NewHandler(workflows, tasks)
+	workflowHandler := workflow_api.NewHandler(workflows, tasks, workers)
 	workflowAPI := workflow_api.NewAPI(workflowHandler)
 
 	group, ctx := errgroup.WithContext(ctx)

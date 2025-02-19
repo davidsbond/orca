@@ -267,7 +267,7 @@ func (h *Handler) SetWorkflowRunStatus(ctx context.Context, id string, status wo
 	run, err := h.workflows.Get(ctx, id)
 	switch {
 	case errors.Is(err, workflow.ErrNotFound):
-		return ErrWorkerNotFound
+		return ErrWorkflowRunNotFound
 	case err != nil:
 		return err
 	}
@@ -276,7 +276,8 @@ func (h *Handler) SetWorkflowRunStatus(ctx context.Context, id string, status wo
 	if run.Status == workflow.StatusSkipped ||
 		run.Status == workflow.StatusComplete ||
 		run.Status == workflow.StatusFailed ||
-		run.Status == workflow.StatusTimeout {
+		run.Status == workflow.StatusTimeout ||
+		run.Status == workflow.StatusCancelled {
 		return nil
 	}
 
@@ -308,6 +309,11 @@ func (h *Handler) SetWorkflowRunStatus(ctx context.Context, id string, status wo
 	if run.Status == workflow.StatusFailed && !run.CompletedAt.Valid {
 		run.CompletedAt.Valid = true
 		run.CompletedAt.V = time.Now()
+	}
+
+	if run.Status == workflow.StatusCancelled && !run.CancelledAt.Valid {
+		run.CancelledAt.Valid = true
+		run.CancelledAt.V = time.Now()
 	}
 
 	err = h.workflows.Save(ctx, run)

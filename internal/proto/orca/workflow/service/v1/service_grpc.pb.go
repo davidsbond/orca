@@ -22,6 +22,7 @@ const (
 	WorkflowService_Schedule_FullMethodName    = "/orca.workflow.service.v1.WorkflowService/Schedule"
 	WorkflowService_GetRun_FullMethodName      = "/orca.workflow.service.v1.WorkflowService/GetRun"
 	WorkflowService_DescribeRun_FullMethodName = "/orca.workflow.service.v1.WorkflowService/DescribeRun"
+	WorkflowService_CancelRun_FullMethodName   = "/orca.workflow.service.v1.WorkflowService/CancelRun"
 )
 
 // WorkflowServiceClient is the client API for WorkflowService service.
@@ -34,6 +35,7 @@ type WorkflowServiceClient interface {
 	GetRun(ctx context.Context, in *GetRunRequest, opts ...grpc.CallOption) (*GetRunResponse, error)
 	// Describe a workflow run.
 	DescribeRun(ctx context.Context, in *DescribeRunRequest, opts ...grpc.CallOption) (*DescribeRunResponse, error)
+	CancelRun(ctx context.Context, in *CancelRunRequest, opts ...grpc.CallOption) (*CancelRunResponse, error)
 }
 
 type workflowServiceClient struct {
@@ -74,6 +76,16 @@ func (c *workflowServiceClient) DescribeRun(ctx context.Context, in *DescribeRun
 	return out, nil
 }
 
+func (c *workflowServiceClient) CancelRun(ctx context.Context, in *CancelRunRequest, opts ...grpc.CallOption) (*CancelRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelRunResponse)
+	err := c.cc.Invoke(ctx, WorkflowService_CancelRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkflowServiceServer is the server API for WorkflowService service.
 // All implementations must embed UnimplementedWorkflowServiceServer
 // for forward compatibility.
@@ -84,6 +96,7 @@ type WorkflowServiceServer interface {
 	GetRun(context.Context, *GetRunRequest) (*GetRunResponse, error)
 	// Describe a workflow run.
 	DescribeRun(context.Context, *DescribeRunRequest) (*DescribeRunResponse, error)
+	CancelRun(context.Context, *CancelRunRequest) (*CancelRunResponse, error)
 	mustEmbedUnimplementedWorkflowServiceServer()
 }
 
@@ -102,6 +115,9 @@ func (UnimplementedWorkflowServiceServer) GetRun(context.Context, *GetRunRequest
 }
 func (UnimplementedWorkflowServiceServer) DescribeRun(context.Context, *DescribeRunRequest) (*DescribeRunResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeRun not implemented")
+}
+func (UnimplementedWorkflowServiceServer) CancelRun(context.Context, *CancelRunRequest) (*CancelRunResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelRun not implemented")
 }
 func (UnimplementedWorkflowServiceServer) mustEmbedUnimplementedWorkflowServiceServer() {}
 func (UnimplementedWorkflowServiceServer) testEmbeddedByValue()                         {}
@@ -178,6 +194,24 @@ func _WorkflowService_DescribeRun_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkflowService_CancelRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkflowServiceServer).CancelRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkflowService_CancelRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkflowServiceServer).CancelRun(ctx, req.(*CancelRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkflowService_ServiceDesc is the grpc.ServiceDesc for WorkflowService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,6 +230,10 @@ var WorkflowService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeRun",
 			Handler:    _WorkflowService_DescribeRun_Handler,
+		},
+		{
+			MethodName: "CancelRun",
+			Handler:    _WorkflowService_CancelRun_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -16,6 +16,9 @@ service WorkerService {
 
   // Run a Task.
   rpc RunTask(RunTaskRequest) returns (RunTaskResponse);
+
+  // Cancel a workflow run.
+  rpc CancelWorkflowRun(CancelWorkflowRunRequest) returns (CancelWorkflowRunResponse);
 }
 
 message RunWorkflowRequest {
@@ -39,3 +42,10 @@ message RunTaskRequest {
 }
 
 message RunTaskResponse {}
+
+message CancelWorkflowRunRequest {
+  // The workflow run to cancel.
+  string workflow_run_id = 1;
+}
+
+message CancelWorkflowRunResponse {}

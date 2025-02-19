@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WorkerService_RunWorkflow_FullMethodName = "/orca.private.worker.service.v1.WorkerService/RunWorkflow"
-	WorkerService_RunTask_FullMethodName     = "/orca.private.worker.service.v1.WorkerService/RunTask"
+	WorkerService_RunWorkflow_FullMethodName       = "/orca.private.worker.service.v1.WorkerService/RunWorkflow"
+	WorkerService_RunTask_FullMethodName           = "/orca.private.worker.service.v1.WorkerService/RunTask"
+	WorkerService_CancelWorkflowRun_FullMethodName = "/orca.private.worker.service.v1.WorkerService/CancelWorkflowRun"
 )
 
 // WorkerServiceClient is the client API for WorkerService service.
@@ -34,6 +35,8 @@ type WorkerServiceClient interface {
 	RunWorkflow(ctx context.Context, in *RunWorkflowRequest, opts ...grpc.CallOption) (*RunWorkflowResponse, error)
 	// Run a Task.
 	RunTask(ctx context.Context, in *RunTaskRequest, opts ...grpc.CallOption) (*RunTaskResponse, error)
+	// Cancel a workflow run.
+	CancelWorkflowRun(ctx context.Context, in *CancelWorkflowRunRequest, opts ...grpc.CallOption) (*CancelWorkflowRunResponse, error)
 }
 
 type workerServiceClient struct {
@@ -64,6 +67,16 @@ func (c *workerServiceClient) RunTask(ctx context.Context, in *RunTaskRequest, o
 	return out, nil
 }
 
+func (c *workerServiceClient) CancelWorkflowRun(ctx context.Context, in *CancelWorkflowRunRequest, opts ...grpc.CallOption) (*CancelWorkflowRunResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CancelWorkflowRunResponse)
+	err := c.cc.Invoke(ctx, WorkerService_CancelWorkflowRun_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkerServiceServer is the server API for WorkerService service.
 // All implementations must embed UnimplementedWorkerServiceServer
 // for forward compatibility.
@@ -75,6 +88,8 @@ type WorkerServiceServer interface {
 	RunWorkflow(context.Context, *RunWorkflowRequest) (*RunWorkflowResponse, error)
 	// Run a Task.
 	RunTask(context.Context, *RunTaskRequest) (*RunTaskResponse, error)
+	// Cancel a workflow run.
+	CancelWorkflowRun(context.Context, *CancelWorkflowRunRequest) (*CancelWorkflowRunResponse, error)
 	mustEmbedUnimplementedWorkerServiceServer()
 }
 
@@ -90,6 +105,9 @@ func (UnimplementedWorkerServiceServer) RunWorkflow(context.Context, *RunWorkflo
 }
 func (UnimplementedWorkerServiceServer) RunTask(context.Context, *RunTaskRequest) (*RunTaskResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunTask not implemented")
+}
+func (UnimplementedWorkerServiceServer) CancelWorkflowRun(context.Context, *CancelWorkflowRunRequest) (*CancelWorkflowRunResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelWorkflowRun not implemented")
 }
 func (UnimplementedWorkerServiceServer) mustEmbedUnimplementedWorkerServiceServer() {}
 func (UnimplementedWorkerServiceServer) testEmbeddedByValue()                       {}
@@ -148,6 +166,24 @@ func _WorkerService_RunTask_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkerService_CancelWorkflowRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelWorkflowRunRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkerServiceServer).CancelWorkflowRun(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WorkerService_CancelWorkflowRun_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkerServiceServer).CancelWorkflowRun(ctx, req.(*CancelWorkflowRunRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkerService_ServiceDesc is the grpc.ServiceDesc for WorkerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -162,6 +198,10 @@ var WorkerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RunTask",
 			Handler:    _WorkerService_RunTask_Handler,
+		},
+		{
+			MethodName: "CancelWorkflowRun",
+			Handler:    _WorkerService_CancelWorkflowRun_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -60,3 +60,15 @@ func (c *Client) RunWorkflow(ctx context.Context, runID string, name string, inp
 
 	return nil
 }
+
+func (c *Client) CancelWorkflowRun(ctx context.Context, runID string) error {
+	request := &workersvcv1.CancelWorkflowRunRequest{
+		WorkflowRunId: runID,
+	}
+
+	if _, err := c.controller.CancelWorkflowRun(ctx, request); err != nil {
+		return err
+	}
+
+	return nil
+}

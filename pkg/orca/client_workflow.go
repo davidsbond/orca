@@ -81,6 +81,18 @@ func (c *Client) DescribeWorkflowRun(ctx context.Context, runID string) (Descrip
 	return result, nil
 }
 
+func (c *Client) CancelWorkflowRun(ctx context.Context, runID string) error {
+	request := &workflowsvcv1.CancelRunRequest{
+		WorkflowRunId: runID,
+	}
+
+	if _, err := c.workflows.CancelRun(ctx, request); err != nil {
+		return formatError(err)
+	}
+
+	return nil
+}
+
 func workflowRunFromProto(run *workflowv1.Run) workflow.Run {
 	return workflow.Run{
 		ID:           run.GetRunId(),
@@ -90,6 +102,7 @@ func workflowRunFromProto(run *workflowv1.Run) workflow.Run {
 		ScheduledAt:  run.GetScheduledAt().AsTime(),
 		StartedAt:    run.GetStartedAt().AsTime(),
 		CompletedAt:  run.GetCompletedAt().AsTime(),
+		CancelledAt:  run.GetCancelledAt().AsTime(),
 		Status:       workflow.Status(run.GetStatus()),
 		Input:        run.GetInput(),
 		Output:       run.GetOutput(),
@@ -142,9 +155,20 @@ func (d Description) String() string {
 }
 
 func (d Description) tree() gotree.Tree {
+	from := d.Run.CreatedAt
+	to := d.Run.CompletedAt
+
+	if d.Run.Status == workflow.StatusCancelled {
+		to = d.Run.CancelledAt
+	}
+
+	if d.Run.Status == workflow.StatusRunning {
+		to = time.Now()
+	}
+
 	wf := fmt.Sprintf("Workflow: %s (%s) [%s]",
 		d.Run.WorkflowName,
-		d.Run.CompletedAt.Sub(d.Run.CreatedAt).Truncate(time.Millisecond),
+		to.Sub(from).Truncate(time.Millisecond),
 		d.Run.Status,
 	)
 

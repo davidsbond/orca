@@ -24,6 +24,7 @@ type (
 		ScheduledAt         sql.Null[time.Time]
 		StartedAt           sql.Null[time.Time]
 		CompletedAt         sql.Null[time.Time]
+		CancelledAt         sql.Null[time.Time]
 		Status              Status
 		Input               sql.Null[pgtype.JSONB]
 		Output              sql.Null[pgtype.JSONB]
@@ -53,6 +54,7 @@ const (
 	StatusFailed
 	StatusSkipped
 	StatusTimeout
+	StatusCancelled
 )
 
 func (r Run) ToProto() *workflowv1.Run {
@@ -78,6 +80,10 @@ func (r Run) ToProto() *workflowv1.Run {
 		run.CompletedAt = timestamppb.New(r.CompletedAt.V)
 	}
 
+	if r.CancelledAt.Valid {
+		run.CancelledAt = timestamppb.New(r.CancelledAt.V)
+	}
+
 	return run
 }
 
@@ -94,13 +100,14 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 			  id, parent_workflow_run_id, workflow_name, 
 			  created_at, scheduled_at, started_at, 
 		  	  completed_at, status, input, output, 
-			  worker_id, idempotent_key
+			  worker_id, idempotent_key, cancelled_at
 			)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 			ON CONFLICT (id) DO UPDATE SET
 				scheduled_at = EXCLUDED.scheduled_at,
 				started_at = EXCLUDED.started_at,
 				completed_at = EXCLUDED.completed_at,
+				cancelled_at = EXCLUDED.cancelled_at,
 				status = EXCLUDED.status,
 				input = EXCLUDED.input,
 				output = EXCLUDED.output,
@@ -120,6 +127,7 @@ func (pr *PostgresRepository) Save(ctx context.Context, run Run) error {
 			run.Output,
 			run.WorkerID,
 			run.IdempotentKey,
+			run.CancelledAt,
 		)
 		switch {
 		case database.IsForeignKeyViolation(err, "parent_workflow_run_id"):
@@ -141,7 +149,7 @@ func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 			    id, parent_workflow_run_id, workflow_name, 
 			    created_at, scheduled_at, started_at, 
 			    completed_at, status, input, output, 
-			    worker_id, idempotent_key
+			    worker_id, idempotent_key, cancelled_at
 			FROM workflow_run WHERE id = $1
 		`
 
@@ -159,6 +167,7 @@ func (pr *PostgresRepository) Get(ctx context.Context, id string) (Run, error) {
 			&run.Output,
 			&run.WorkerID,
 			&run.IdempotentKey,
+			&run.CancelledAt,
 		)
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
@@ -178,7 +187,7 @@ func (pr *PostgresRepository) GetPendingWorkflowRuns(ctx context.Context) ([]Run
 			    id, parent_workflow_run_id, workflow_name, 
 			    created_at, scheduled_at, started_at, 
 			    completed_at, status, input, output,
-			    worker_id, idempotent_key
+			    worker_id, idempotent_key, cancelled_at
 			FROM workflow_run WHERE (status = $1 AND worker_id IS NULL)
 		`
 
@@ -201,6 +210,7 @@ func (pr *PostgresRepository) GetPendingWorkflowRuns(ctx context.Context) ([]Run
 				&run.Output,
 				&run.WorkerID,
 				&run.IdempotentKey,
+				&run.CancelledAt,
 			}
 		})
 	})
@@ -213,7 +223,7 @@ func (pr *PostgresRepository) ListForWorkflowRun(ctx context.Context, id string)
 			    id, parent_workflow_run_id, workflow_name, 
 			    created_at, scheduled_at, started_at, 
 			    completed_at, status, input, output,
-			    worker_id, idempotent_key
+			    worker_id, idempotent_key, cancelled_at
 			FROM workflow_run WHERE parent_workflow_run_id = $1
 		`
 
@@ -236,6 +246,7 @@ func (pr *PostgresRepository) ListForWorkflowRun(ctx context.Context, id string)
 				&run.Output,
 				&run.WorkerID,
 				&run.IdempotentKey,
+				&run.CancelledAt,
 			}
 		})
 	})
@@ -248,7 +259,7 @@ func (pr *PostgresRepository) FindByIdempotentKey(ctx context.Context, name stri
 			    id, parent_workflow_run_id, workflow_name, 
 			    created_at, scheduled_at, started_at, 
 			    completed_at, status, input, output,
-			    worker_id, idempotent_key
+			    worker_id, idempotent_key, cancelled_at
 			FROM workflow_run 
 			WHERE workflow_name = $1 AND idempotent_key = $2 AND status = $3
 			LIMIT 1
@@ -268,6 +279,7 @@ func (pr *PostgresRepository) FindByIdempotentKey(ctx context.Context, name stri
 			&run.Output,
 			&run.WorkerID,
 			&run.IdempotentKey,
+			&run.CancelledAt,
 		)
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):

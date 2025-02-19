@@ -1,15 +1,13 @@
 package workflow
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"time"
 )
 
 type (
 	Workflow interface {
-		Run(ctx context.Context, runID string, input json.RawMessage) (json.RawMessage, error)
+		Run(ctx *Context, runID string, input json.RawMessage) (json.RawMessage, error)
 		Name() string
 	}
 
@@ -23,25 +21,11 @@ type (
 		ScheduledAt  time.Time       `json:"scheduledAt"`
 		StartedAt    time.Time       `json:"startedAt"`
 		CompletedAt  time.Time       `json:"completedAt"`
+		CancelledAt  time.Time       `json:"cancelledAt"`
 		Status       Status          `json:"status"`
 		Input        json.RawMessage `json:"input"`
 		Output       json.RawMessage `json:"output"`
 	}
-
-	Client interface {
-		ScheduleWorkflow(ctx context.Context, params ScheduleWorkflowParams) (string, error)
-		GetWorkflowRun(ctx context.Context, runID string) (Run, error)
-	}
-
-	ScheduleWorkflowParams struct {
-		WorkflowRunID string
-		WorkflowName  string
-		IdempotentKey string
-		Input         json.RawMessage
-	}
-
-	runCtxKey    struct{}
-	clientCtxKey struct{}
 
 	Error struct {
 		Message      string `json:"message"`
@@ -57,10 +41,6 @@ func (e Error) Error() string {
 	return e.Message
 }
 
-var (
-	ErrTimeout = errors.New("workflow timeout")
-)
-
 const (
 	StatusUnspecified Status = iota
 	StatusPending
@@ -70,6 +50,7 @@ const (
 	StatusFailed
 	StatusSkipped
 	StatusTimeout
+	StatusCancelled
 )
 
 func (s Status) String() string {
@@ -86,26 +67,11 @@ func (s Status) String() string {
 		return "FAILED"
 	case StatusSkipped:
 		return "SKIPPED"
+	case StatusTimeout:
+		return "TIMEOUT"
+	case StatusCancelled:
+		return "CANCELLED"
 	default:
 		return "UNKNOWN"
 	}
-}
-
-func RunToContext(ctx context.Context, r Run) context.Context {
-	return context.WithValue(ctx, runCtxKey{}, r)
-}
-
-func RunFromContext(ctx context.Context) (Run, bool) {
-	run, ok := ctx.Value(runCtxKey{}).(Run)
-	return run, ok
-}
-
-func ClientFromContext(ctx context.Context) (Client, bool) {
-	client, ok := ctx.Value(clientCtxKey{}).(Client)
-
-	return client, ok
-}
-
-func ClientToContext(ctx context.Context, client Client) context.Context {
-	return context.WithValue(ctx, clientCtxKey{}, client)
 }

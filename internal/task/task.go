@@ -15,18 +15,6 @@ type (
 
 	Status int
 
-	Client interface {
-		ScheduleTask(ctx context.Context, params ScheduleTaskParams) (string, error)
-		GetTaskRun(ctx context.Context, runID string) (Run, error)
-	}
-
-	ScheduleTaskParams struct {
-		WorkflowRunID string
-		TaskName      string
-		IdempotentKey string
-		Input         json.RawMessage
-	}
-
 	Run struct {
 		ID            string          `json:"id"`
 		WorkflowRunID string          `json:"workflowRunId"`
@@ -39,8 +27,6 @@ type (
 		Input         json.RawMessage `json:"input"`
 		Output        json.RawMessage `json:"output"`
 	}
-
-	ctxKey struct{}
 
 	Error struct {
 		Message  string `json:"message"`
@@ -83,17 +69,9 @@ func (s Status) String() string {
 		return "FAILED"
 	case StatusSkipped:
 		return "SKIPPED"
+	case StatusTimeout:
+		return "TIMEOUT"
 	default:
 		return "UNKNOWN"
 	}
-}
-
-func ClientFromContext(ctx context.Context) (Client, bool) {
-	client, ok := ctx.Value(ctxKey{}).(Client)
-
-	return client, ok
-}
-
-func ClientToContext(ctx context.Context, client Client) context.Context {
-	return context.WithValue(ctx, ctxKey{}, client)
 }

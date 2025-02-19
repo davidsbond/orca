@@ -47,6 +47,12 @@ service WorkflowService {
 
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Returns a full description of a workflow run, including tasks, child workflows etc."};
   }
+
+  rpc CancelRun(CancelRunRequest) returns (CancelRunResponse) {
+    option (google.api.http) = {delete: "/v1/workflow/{workflow_name}/run/{workflow_run_id}"};
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Cancel a workflow run. This prevents the desired run from being scheduled or terminates it if it is already running or pending run with a worker."};
+  }
 }
 
 message ScheduleRequest {
@@ -84,3 +90,12 @@ message DescribeRunResponse {
   // The description of the workflow run and its child actions.
   orca.workflow.v1.WorkflowRunDescription description = 1;
 }
+
+message CancelRunRequest {
+  // The unique identifier of the workflow run.
+  string workflow_run_id = 1;
+  // The name of the workflow.
+  string workflow_name = 2;
+}
+
+message CancelRunResponse {}

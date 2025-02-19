@@ -34,7 +34,14 @@ func greetWorkflow(ctx context.Context, input GreetWorkflowInput) (GreetWorkflow
 		return GreetWorkflowOutput{}, err
 	}
 
-	return GreetWorkflowOutput{Greeting: output.Greeting}, nil
+	for {
+		select {
+		case <-ctx.Done():
+			return GreetWorkflowOutput{Greeting: output.Greeting}, ctx.Err()
+		}
+	}
+
+	//return GreetWorkflowOutput{Greeting: output.Greeting}, nil
 }
 
 type (

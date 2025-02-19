@@ -100,6 +100,43 @@
         "tags": [
           "Workflow Service"
         ]
+      },
+      "delete": {
+        "description": "Cancel a workflow run. This prevents the desired run from being scheduled or terminates it if it is already running or pending run with a worker.",
+        "operationId": "WorkflowService_CancelRun",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CancelRunResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "workflowName",
+            "description": "The name of the workflow.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "workflowRunId",
+            "description": "The unique identifier of the workflow run.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Workflow Service"
+        ]
       }
     },
     "/v1/workflow/{workflowName}/run/{workflowRunId}/describe": {
@@ -275,6 +312,11 @@
           "format": "date-time",
           "description": "When the workflow run was completed."
         },
+        "cancelledAt": {
+          "type": "string",
+          "format": "date-time",
+          "title": "When the workflow run was cancelled"
+        },
         "status": {
           "$ref": "#/definitions/orcaworkflowv1Status",
           "description": "The status of the workflow run."
@@ -302,10 +344,11 @@
         "STATUS_COMPLETE",
         "STATUS_FAILED",
         "STATUS_SKIPPED",
-        "STATUS_TIMEOUT"
+        "STATUS_TIMEOUT",
+        "STATUS_CANCELLED"
       ],
       "default": "STATUS_UNSPECIFIED",
-      "description": "The Status enumeration represents the status of a workflow run.\n\n - STATUS_UNSPECIFIED: The workflow run has an unknown status.\n - STATUS_PENDING: The workflow run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The workflow run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The workflow run is running.\n - STATUS_COMPLETE: The workflow run completed successfully.\n - STATUS_FAILED: The workflow run failed.\n - STATUS_SKIPPED: The workflow run was skipped due to a match on the idempotent key and workflow\nname with a previous workflow ran.\n - STATUS_TIMEOUT: The workflow run was cancelled as its duration took longer than its deadline."
+      "description": "The Status enumeration represents the status of a workflow run.\n\n - STATUS_UNSPECIFIED: The workflow run has an unknown status.\n - STATUS_PENDING: The workflow run has been created and is awaiting scheduling.\n - STATUS_SCHEDULED: The workflow run has been scheduled and is awaiting execution.\n - STATUS_RUNNING: The workflow run is running.\n - STATUS_COMPLETE: The workflow run completed successfully.\n - STATUS_FAILED: The workflow run failed.\n - STATUS_SKIPPED: The workflow run was skipped due to a match on the idempotent key and workflow\nname with a previous workflow ran.\n - STATUS_TIMEOUT: The workflow run was cancelled as its duration took longer than its deadline.\n - STATUS_CANCELLED: The workflow run was manually cancelled."
     },
     "protobufAny": {
       "type": "object",
@@ -315,6 +358,9 @@
         }
       },
       "additionalProperties": {}
+    },
+    "v1CancelRunResponse": {
+      "type": "object"
     },
     "v1DescribeRunResponse": {
       "type": "object",

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 
@@ -18,6 +19,9 @@ type (
 		workflows  chan *scheduledWorkflow
 		tasks      chan *scheduledTask
 		controller ControllerClient
+
+		inFlightMux       sync.RWMutex
+		inFlightWorkflows map[string]context.CancelFunc
 	}
 
 	scheduledWorkflow struct {
@@ -35,7 +39,7 @@ type (
 	ControllerClient interface {
 		SetWorkflowRunStatus(ctx context.Context, runID string, status workflow.Status, output json.RawMessage) error
 		SetTaskRunStatus(ctx context.Context, runID string, status task.Status, output json.RawMessage) error
-		ScheduleTask(ctx context.Context, params task.ScheduleTaskParams) (string, error)
+		ScheduleTask(ctx context.Context, params workflow.ScheduleTaskParams) (string, error)
 		GetTaskRun(ctx context.Context, runID string) (task.Run, error)
 		GetWorkflowRun(ctx context.Context, runID string) (workflow.Run, error)
 		ScheduleWorkflow(ctx context.Context, params workflow.ScheduleWorkflowParams) (string, error)
@@ -44,9 +48,10 @@ type (
 
 func New(controller ControllerClient) *Scheduler {
 	return &Scheduler{
-		controller: controller,
-		workflows:  make(chan *scheduledWorkflow, 1024),
-		tasks:      make(chan *scheduledTask, 1024),
+		controller:        controller,
+		workflows:         make(chan *scheduledWorkflow, 1024),
+		tasks:             make(chan *scheduledTask, 1024),
+		inFlightWorkflows: make(map[string]context.CancelFunc),
 	}
 }
 
@@ -76,6 +81,22 @@ func (s *Scheduler) ScheduleWorkflow(ctx context.Context, id string, wf workflow
 	case s.workflows <- sw:
 		return nil
 	}
+}
+
+func (s *Scheduler) CancelWorkflowRun(ctx context.Context, id string) error {
+	s.inFlightMux.RLock()
+	cancel, ok := s.inFlightWorkflows[id]
+	s.inFlightMux.RUnlock()
+
+	if ok {
+		cancel()
+	}
+
+	if err := s.controller.SetWorkflowRunStatus(ctx, id, workflow.StatusCancelled, nil); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Scheduler) ScheduleTask(ctx context.Context, id string, t task.Task, input json.RawMessage) error {
@@ -131,13 +152,28 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 		return err
 	}
 
+	if run.Status == workflow.StatusCancelled {
+		return nil
+	}
+
 	if err = s.controller.SetWorkflowRunStatus(ctx, run.ID, workflow.StatusRunning, nil); err != nil {
 		return err
 	}
 
-	ctx = workflow.RunToContext(ctx, run)
-	ctx = workflow.ClientToContext(ctx, s.controller)
-	ctx = task.ClientToContext(ctx, s.controller)
+	wCtx, cancel := workflow.NewContext(ctx, run, s.controller)
+	defer cancel()
+
+	// We store the cancellation functions for the special workflow contexts to allow us
+	// to cancel a running workflow.
+	s.inFlightMux.Lock()
+	s.inFlightWorkflows[run.ID] = cancel
+	s.inFlightMux.Unlock()
+
+	defer func() {
+		s.inFlightMux.Lock()
+		delete(s.inFlightWorkflows, run.ID)
+		s.inFlightMux.Unlock()
+	}()
 
 	logger := log.FromContext(ctx).With(
 		slog.String("workflow_run_id", sw.runID),
@@ -145,11 +181,20 @@ func (s *Scheduler) runWorkflow(ctx context.Context, sw *scheduledWorkflow) erro
 	)
 
 	logger.InfoContext(ctx, "running workflow")
-	output, err := sw.workflow.Run(ctx, sw.runID, sw.input)
+	output, err := sw.workflow.Run(wCtx, sw.runID, sw.input)
 
 	if errors.Is(err, workflow.ErrTimeout) {
 		logger.ErrorContext(ctx, "workflow timed out")
 		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusTimeout, nil); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	if errors.Is(err, workflow.ErrCancelled) {
+		logger.WarnContext(ctx, "workflow cancelled")
+		if err = s.controller.SetWorkflowRunStatus(ctx, sw.runID, workflow.StatusCancelled, nil); err != nil {
 			return err
 		}
 

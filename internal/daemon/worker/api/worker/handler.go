@@ -24,6 +24,7 @@ type (
 	Scheduler interface {
 		ScheduleWorkflow(ctx context.Context, runID string, workflow workflow.Workflow, input json.RawMessage) error
 		ScheduleTask(ctx context.Context, runID string, task task.Task, input json.RawMessage) error
+		CancelWorkflowRun(ctx context.Context, runID string) error
 	}
 )
 
@@ -54,4 +55,8 @@ func (svc *Handler) ScheduleTask(ctx context.Context, name string, runID string,
 	}
 
 	return svc.scheduler.ScheduleTask(ctx, runID, tsk, input)
+}
+
+func (svc *Handler) CancelWorkflowRun(ctx context.Context, runID string) error {
+	return svc.scheduler.CancelWorkflowRun(ctx, runID)
 }

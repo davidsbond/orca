@@ -140,3 +140,36 @@ func (pr *PostgresRepository) GetWorkerForWorkflow(ctx context.Context, name str
 		}
 	})
 }
+
+func (pr *PostgresRepository) Get(ctx context.Context, id string) (Worker, error) {
+	return database.Read(ctx, pr.db, func(ctx context.Context, tx pgx.Tx) (Worker, error) {
+		const q = `
+			SELECT id, advertise_address, workflows, tasks 
+			FROM worker WHERE id = $1
+		`
+
+		var (
+			worker    Worker
+			workflows pgtype.FlatArray[string]
+			tasks     pgtype.FlatArray[string]
+		)
+
+		err := tx.QueryRow(ctx, q, id).Scan(
+			&worker.ID,
+			&worker.AdvertiseAddress,
+			&workflows,
+			&tasks,
+		)
+		switch {
+		case errors.Is(err, pgx.ErrNoRows):
+			return worker, ErrNotFound
+		case err != nil:
+			return worker, err
+		default:
+			worker.Workflows = workflows
+			worker.Tasks = tasks
+
+			return worker, nil
+		}
+	})
+}

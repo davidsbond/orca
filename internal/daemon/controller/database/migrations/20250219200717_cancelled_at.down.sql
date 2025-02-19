@@ -1,0 +1,5 @@
+BEGIN;
+
+ALTER TABLE IF EXISTS workflow_run DROP COLUMN IF EXISTS cancelled_at;
+
+COMMIT;

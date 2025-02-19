@@ -25,6 +25,7 @@ type (
 		ScheduleWorkflow(ctx context.Context, name string, input json.RawMessage) (string, error)
 		GetRun(ctx context.Context, runID string) (workflow.Run, error)
 		DescribeRun(ctx context.Context, runID string) (Description, error)
+		CancelRun(ctx context.Context, runID string) error
 	}
 )
 
@@ -57,7 +58,7 @@ func (api *API) GetRun(ctx context.Context, request *workflowsvcv1.GetRunRequest
 	run, err := api.service.GetRun(ctx, request.GetWorkflowRunId())
 	switch {
 	case errors.Is(err, ErrNotFound):
-		return nil, status.Errorf(codes.NotFound, "workflow %s does not exist", request.GetWorkflowRunId())
+		return nil, status.Errorf(codes.NotFound, "workflow run %s does not exist", request.GetWorkflowRunId())
 	case err != nil:
 		return nil, status.Errorf(codes.Internal, "failed to get workflow run %s: %v", request.GetWorkflowRunId(), err)
 	default:
@@ -69,10 +70,22 @@ func (api *API) DescribeRun(ctx context.Context, request *workflowsvcv1.Describe
 	description, err := api.service.DescribeRun(ctx, request.GetWorkflowRunId())
 	switch {
 	case errors.Is(err, ErrNotFound):
-		return nil, status.Errorf(codes.NotFound, "workflow %s does not exist", request.GetWorkflowRunId())
+		return nil, status.Errorf(codes.NotFound, "workflow run %s does not exist", request.GetWorkflowRunId())
 	case err != nil:
 		return nil, status.Errorf(codes.Internal, "failed to describe workflow run %s: %v", request.GetWorkflowRunId(), err)
 	default:
 		return &workflowsvcv1.DescribeRunResponse{Description: description.ToProto()}, nil
+	}
+}
+
+func (api *API) CancelRun(ctx context.Context, request *workflowsvcv1.CancelRunRequest) (*workflowsvcv1.CancelRunResponse, error) {
+	err := api.service.CancelRun(ctx, request.GetWorkflowRunId())
+	switch {
+	case errors.Is(err, ErrNotFound):
+		return nil, status.Errorf(codes.NotFound, "workflow run %s does not exist", request.GetWorkflowRunId())
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to cancel workflow run %s: %v", request.GetWorkflowRunId(), err)
+	default:
+		return &workflowsvcv1.CancelRunResponse{}, nil
 	}
 }

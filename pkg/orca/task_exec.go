@@ -24,7 +24,7 @@ func ExecuteTask[Input, Output any](ctx context.Context, t *Task[Input, Output],
 		return output, errors.New("workflow not present in context")
 	}
 
-	client, ok := task.ClientFromContext(ctx)
+	client, ok := workflow.ClientFromContext(ctx)
 	if !ok {
 		return output, errors.New("client not present in context")
 	}
@@ -34,7 +34,7 @@ func ExecuteTask[Input, Output any](ctx context.Context, t *Task[Input, Output],
 		key = t.KeyFunc(input)
 	}
 
-	runID, err := client.ScheduleTask(ctx, task.ScheduleTaskParams{
+	runID, err := client.ScheduleTask(ctx, workflow.ScheduleTaskParams{
 		WorkflowRunID: run.ID,
 		TaskName:      t.TaskName,
 		IdempotentKey: key,

@@ -23,6 +23,7 @@ type (
 	Service interface {
 		ScheduleWorkflow(ctx context.Context, name string, runID string, input json.RawMessage) error
 		ScheduleTask(ctx context.Context, name string, runID string, input json.RawMessage) error
+		CancelWorkflowRun(ctx context.Context, runID string) error
 	}
 )
 
@@ -70,4 +71,12 @@ func (api *API) RunTask(ctx context.Context, request *workersvcv1.RunTaskRequest
 	default:
 		return &workersvcv1.RunTaskResponse{}, nil
 	}
+}
+
+func (api *API) CancelWorkflowRun(ctx context.Context, request *workersvcv1.CancelWorkflowRunRequest) (*workersvcv1.CancelWorkflowRunResponse, error) {
+	if err := api.service.CancelWorkflowRun(ctx, request.GetWorkflowRunId()); err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to cancel workflow run: %v", err)
+	}
+
+	return &workersvcv1.CancelWorkflowRunResponse{}, nil
 }

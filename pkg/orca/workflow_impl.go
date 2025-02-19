@@ -1,7 +1,6 @@
 package orca
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -20,7 +19,7 @@ type (
 	}
 )
 
-func (w *Workflow[Input, Output]) Run(ctx context.Context, runID string, input json.RawMessage) (output json.RawMessage, err error) {
+func (w *Workflow[Input, Output]) Run(ctx *workflow.Context, runID string, input json.RawMessage) (output json.RawMessage, err error) {
 	var inp Input
 
 	if len(input) > 0 {
@@ -58,14 +57,10 @@ func (w *Workflow[Input, Output]) Run(ctx context.Context, runID string, input j
 		}
 	}()
 
-	wCtx := ctx
-	var cancel context.CancelFunc
-
 	// If the workflow has specified a timeout, we modify the special context passed
 	// through the workflow action to use it.
 	if w.Options.Timeout > 0 {
-		wCtx, cancel = context.WithTimeout(ctx, w.Options.Timeout)
-		defer cancel()
+		ctx.SetTimeout(w.Options.Timeout)
 	}
 
 	var out Output
@@ -73,15 +68,17 @@ func (w *Workflow[Input, Output]) Run(ctx context.Context, runID string, input j
 	// Perform the action up to the retry count, if the error given by the action
 	// is nil we break from the loop.
 	for range w.Options.RetryCount + 1 {
-		out, err = w.Action(wCtx, inp)
-		if err == nil {
+		out, err = w.Action(ctx, inp)
+		if errors.Is(err, workflow.ErrCancelled) || err == nil {
 			break
 		}
 	}
 
 	switch {
-	case errors.Is(err, context.DeadlineExceeded):
-		return nil, workflow.ErrTimeout
+	case errors.Is(err, workflow.ErrTimeout):
+		return nil, err
+	case errors.Is(err, workflow.ErrCancelled):
+		return nil, err
 	case err != nil:
 		return nil, workflowError(w.WorkflowName, runID, err)
 	}

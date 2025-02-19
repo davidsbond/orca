@@ -74,7 +74,7 @@ func (c *Client) SetTaskRunStatus(ctx context.Context, runID string, status task
 	return nil
 }
 
-func (c *Client) ScheduleTask(ctx context.Context, params task.ScheduleTaskParams) (string, error) {
+func (c *Client) ScheduleTask(ctx context.Context, params workflow.ScheduleTaskParams) (string, error) {
 	request := &controllersvcv1.ScheduleTaskRequest{
 		WorkflowRunId: params.WorkflowRunID,
 		TaskName:      params.TaskName,
@@ -134,6 +134,7 @@ func (c *Client) GetWorkflowRun(ctx context.Context, runID string) (workflow.Run
 		ScheduledAt:  t.GetScheduledAt().AsTime(),
 		StartedAt:    t.GetStartedAt().AsTime(),
 		CompletedAt:  t.GetCompletedAt().AsTime(),
+		CancelledAt:  t.GetCancelledAt().AsTime(),
 		Status:       workflow.Status(t.GetStatus()),
 		Input:        t.GetInput(),
 		Output:       t.GetOutput(),
