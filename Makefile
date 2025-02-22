@@ -1,5 +1,6 @@
 format:
 	go tool buf format -w
+	go fmt ./...
 
 generate:
 	go generate ./...
@@ -9,3 +10,6 @@ migrate:
 
 test:
 	go test -race -short ./...
+
+lint:
+	go vet ./...
