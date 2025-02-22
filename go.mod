@@ -9,7 +9,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
-	github.com/jackc/pgtype v1.14.0
+	github.com/jackc/pgtype v1.14.4
 	github.com/jackc/pgx/v5 v5.5.4
 	github.com/spf13/cobra v1.8.1
 	github.com/stretchr/testify v1.10.0
