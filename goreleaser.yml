@@ -1,0 +1,73 @@
+project_name: "orca"
+version: 2
+builds:
+  - env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    binary: "{{ .ProjectName }}"
+
+dockers:
+  - id: linux_amd64
+    goos: linux
+    goarch: amd64
+    image_templates:
+      - "ghcr.io/davidsbond/orca:{{ .Tag }}-amd64"
+    extra_files:
+      - README.md
+      - LICENSE
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+
+  - id: linux_arm64
+    goos: linux
+    goarch: arm64
+    image_templates:
+      - "ghcr.io/davidsbond/orca:{{ .Tag }}-arm64"
+    extra_files:
+      - README.md
+      - LICENSE
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+
+docker_manifests:
+  - name_template: "ghcr.io/davidsbond/orca:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/davidsbond/orca:{{ .Tag }}-amd64"
+      - "ghcr.io/davidsbond/orca:{{ .Tag }}-arm64"
+
+archives:
+  - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+  algorithm: sha256
+
+release:
+  mode: replace
+
+changelog:
+  use: github
+
+upx:
+  - enabled: true
+    compress: "6"
+    lzma: false

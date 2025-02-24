@@ -13,3 +13,9 @@ test:
 
 lint:
 	go vet ./...
+
+release:
+	go tool goreleaser release --clean
+
+snapshot:
+	go tool goreleaser release --snapshot
