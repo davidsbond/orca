@@ -43,6 +43,7 @@ require (
 	connectrpc.com/connect v1.18.1 // indirect
 	connectrpc.com/otelconnect v0.7.1 // indirect
 	dario.cat/mergo v1.0.1 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/42wim/httpsig v1.2.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -195,7 +196,7 @@ require (
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.6.1 // indirect
 	github.com/go-git/go-git/v5 v5.13.1 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
@@ -210,7 +211,6 @@ require (
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/go-restruct/restruct v1.2.0-alpha // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
-	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -323,6 +323,7 @@ require (
 	github.com/moby/sys/user v0.3.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
+	github.com/montanaflynn/stats v0.7.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
@@ -341,7 +342,6 @@ require (
 	github.com/mutecomm/go-sqlcipher/v4 v4.4.0 // indirect
 	github.com/nakagami/firebirdsql v0.0.0-20190310045651-3c02a58cfed8 // indirect
 	github.com/neo4j/neo4j-go-driver v1.8.1-0.20200803113522-b626aa943eba // indirect
-	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
