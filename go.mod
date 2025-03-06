@@ -6,7 +6,7 @@ require (
 	github.com/disiqueira/gotree v1.0.0
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/uuid v1.6.0
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.2.0
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgtype v1.14.4
@@ -21,7 +21,7 @@ require (
 
 require (
 	buf.build/gen/go/bufbuild/bufplugin/protocolbuffers/go v1.36.3-20241031151143-70f632351282.1 // indirect
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.3-20241127180247-a33202765966.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.4-20250130201111-63bb56e20495.1 // indirect
 	buf.build/gen/go/bufbuild/registry/connectrpc/go v1.18.1-20250106231242-56271afbd6ce.1 // indirect
 	buf.build/gen/go/bufbuild/registry/protocolbuffers/go v1.36.3-20250106231242-56271afbd6ce.1 // indirect
 	buf.build/gen/go/pluginrpc/pluginrpc/protocolbuffers/go v1.36.3-20241007202033-cf42259fcbfc.1 // indirect
@@ -124,7 +124,7 @@ require (
 	github.com/bufbuild/buf v1.50.0 // indirect
 	github.com/bufbuild/protocompile v0.14.1 // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20250106231243-3a819552c9d9 // indirect
-	github.com/bufbuild/protovalidate-go v0.8.2 // indirect
+	github.com/bufbuild/protovalidate-go v0.9.1 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/caarlos0/ctrlc v1.2.0 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
@@ -224,7 +224,7 @@ require (
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/google/cel-go v0.22.1 // indirect
+	github.com/google/cel-go v0.23.0 // indirect
 	github.com/google/flatbuffers v2.0.8+incompatible // indirect
 	github.com/google/go-containerregistry v0.20.3 // indirect
 	github.com/google/go-github/v39 v39.2.0 // indirect
